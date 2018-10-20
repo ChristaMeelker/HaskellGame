@@ -1,4 +1,4 @@
-# Revision history for Game
+# Revision history for HaskellGame
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

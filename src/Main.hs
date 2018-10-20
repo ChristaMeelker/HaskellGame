@@ -1,4 +1,16 @@
-module Main where
+module Main(main) where
 
-main :: IO ()
-main = putStrLn "Hello, Eliza & Christa!"
+    import Graphics.Gloss
+    
+    window :: Display
+    window = InWindow "Nice Window" (800, 800) (10, 10)
+    
+    background :: Color
+    background = black
+    
+    drawing :: Picture
+    drawing = (color green (circle 100))
+    
+    main :: IO ()
+    main = display window background drawing
+    
