@@ -37,3 +37,6 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
 
 initialState :: GameState
 initialState = GameState (4,7) FaceRight (2,10) (10,7)
+
+firstRow :: MazeRow
+firstRow = [MazeField {field = Wall, content = Empty}, MazeField {field = Wall, content = Empty}, MazeField {field = Wall, content = Empty}]
