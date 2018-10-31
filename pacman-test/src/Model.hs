@@ -28,9 +28,11 @@ type MazeRow = [MazeField]
 
 data MazeField = MazeField { field :: FieldType, content :: ContentType }
 
-data FieldType = Straightwaway | Intersection | Wall
+data FieldType = Straightaway | Intersection | Wall
+  deriving (Eq)
 
 data ContentType = FoodDot | Energizer | Empty
+  deriving (Eq)
 
 data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
@@ -38,5 +40,27 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
 initialState :: GameState
 initialState = GameState (4,7) FaceRight (2,10) (10,7)
 
-firstRow :: MazeRow
-firstRow = [MazeField {field = Wall, content = Empty}, MazeField {field = Wall, content = Empty}, MazeField {field = Wall, content = Empty}]
+drawField :: MazeField -> Point -> Picture
+drawField (MazeField a b) (x,y)
+  | a == Wall     = translate (x*20) (y*20) $ color blue $ rectangleSolid 20 20
+  | b == FoodDot  = translate (x*20) (y*20) $ color white $ circleSolid 4
+  | otherwise     = undefined
+
+
+-- TEST MAZE AAN HET MAKEN HIER  
+
+wall :: MazeField
+wall = MazeField {field = Wall, content = Empty}
+
+path :: MazeField
+path = MazeField {field = Straightaway, content = Empty}
+
+wallRow :: MazeRow
+wallRow = [wall, wall, wall, wall, wall]
+
+otherRow :: MazeRow
+otherRow = [wall, path, path, path, wall]
+
+testMaze :: Maze
+testMaze = [wallRow, otherRow, otherRow, otherRow, wallRow]
+

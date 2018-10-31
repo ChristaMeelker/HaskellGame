@@ -16,9 +16,9 @@ import Data.Maybe
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs (GameState a b c d)
-      | b == FaceUp      = return (movePacmanUp 1 (GameState a b c d))
-      | b == FaceDown      = return (movePacmanDown 1 (GameState a b c d))
-      | b == FaceLeft      = return (movePacmanLeft 1 (GameState a b c d))
+      | b == FaceUp         = return (movePacmanUp 1 (GameState a b c d))
+      | b == FaceDown       = return (movePacmanDown 1 (GameState a b c d))
+      | b == FaceLeft       = return (movePacmanLeft 1 (GameState a b c d))
       | b == FaceRight      = return (movePacmanRight 1 (GameState a b c d))
  
 -- | Handle user input
