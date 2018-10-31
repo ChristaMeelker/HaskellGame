@@ -15,8 +15,12 @@ import Data.Maybe
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
-step secs gstate  = return gstate
-
+step secs (GameState a b c d)
+      | b == FaceUp      = return (movePacmanUp 1 (GameState a b c d))
+      | b == FaceDown      = return (movePacmanDown 1 (GameState a b c d))
+      | b == FaceLeft      = return (movePacmanLeft 1 (GameState a b c d))
+      | b == FaceRight      = return (movePacmanRight 1 (GameState a b c d))
+ 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
@@ -31,10 +35,10 @@ inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate =  movePacmanRight 1 g
 inputKey _ gstate = gstate
 
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y - dy), pacmanDir = FaceUp}
+movePacmanUp dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y + dy), pacmanDir = FaceUp}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y + dy), pacmanDir = FaceDown}
+movePacmanDown dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y - dy), pacmanDir = FaceDown}
 
 movePacmanLeft :: Float -> GameState -> GameState
 movePacmanLeft dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x - dx, y), pacmanDir = FaceLeft}
