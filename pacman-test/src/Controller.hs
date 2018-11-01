@@ -55,7 +55,7 @@ calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 determinePath :: Point -> [Point] -> Point
 determinePath targetTile possiblePaths = possiblePaths !! indexOfShortestDistance
   where distances = map (calculateDistance targetTile) possiblePaths 
-        shortestDistance = foldr1 min(distances)
+        shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
 
 blinkyChaseTarget :: GameState -> Point
@@ -96,3 +96,17 @@ clydeChaseTarget GameState{pacmanPos = (x0, y0), clydePos = (x1, y1)}
 
 clydeScatterTarget :: Point
 clydeScatterTarget = (1,36)
+
+getHighScore :: String -> IO String
+getHighScore = readFileStrict
+
+updateHighScore :: String -> String -> IO ()
+updateHighScore score file = do s <- getHighScore file
+                                when (s < score) $ writeFile file score
+
+-- Below methodes taken from https://github.com/nh2/shake/blob/e0c4bda9943bfadc9383ec31cfe828d67879e8ca/Development/Shake/Derived.hs to circumvent the "open file resource busy (file is locked)" error
+hGetContentsStrict :: Handle -> IO String
+hGetContentsStrict h = hGetContents h >>= \s -> length s `seq` return s
+
+readFileStrict :: FilePath -> IO String
+readFileStrict name =  openFile name ReadMode >>= hGetContentsStrict

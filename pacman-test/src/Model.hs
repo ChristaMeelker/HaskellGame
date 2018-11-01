@@ -27,12 +27,13 @@ type Maze = [MazeRow]
 type MazeRow = [MazeField]
 
 data MazeField = MazeField { field :: FieldType, content :: ContentType }
+  deriving (Show)
 
 data FieldType = Straightaway | Intersection | Wall
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data ContentType = FoodDot | Energizer | Empty
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
@@ -46,6 +47,8 @@ drawField (MazeField a b) (x,y)
   | b == FoodDot  = translate (x*20) (y*20) $ color white $ circleSolid 4
   | otherwise     = undefined
 
+getMazeField :: (Int,Int) -> [[MazeField]] -> MazeField
+getMazeField fieldLocation@(x,y) maze = (maze !! (x - 1)) !! (y - 1)
 
 -- TEST MAZE AAN HET MAKEN HIER  
 
