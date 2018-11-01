@@ -48,6 +48,9 @@ drawField ((x,y),MazeField a b)
   | b == FoodDot  = translate (-250 + y*20) (-250 + x*20) $ color white $ circleSolid 3
   | otherwise     = color green $ circleSolid 6 -- TO DO: this last row has no meaning
 
+getMazeField :: (Int,Int) -> [[MazeField]] -> MazeField
+getMazeField fieldLocation@(x,y) maze = (maze !! (x - 1)) !! (y - 1)
+
 -- //BUILDING FIRST LEVEL MAZE//
 
 -- Wall
