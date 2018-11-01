@@ -51,6 +51,9 @@ movePacmanRight dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x + dx
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 
+getRandomNumber :: Int -> Int -> IO Int
+getRandomNumber a b = randomRIO (a, b)
+
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
 -- to the target tile the order should be up > left > down > right.
