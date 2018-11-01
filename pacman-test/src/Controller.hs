@@ -10,6 +10,8 @@ import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
+import System.IO
+import Control.Monad
 import Data.List
 import Data.Maybe
 
