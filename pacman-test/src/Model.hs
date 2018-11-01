@@ -27,12 +27,13 @@ type Maze = [MazeRow]
 type MazeRow = [MazeField]
 
 data MazeField = MazeField { field :: FieldType, content :: ContentType }
+  deriving (Show)
 
 data FieldType = Straightaway | Intersection | Wall
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data ContentType = FoodDot | Energizer | Empty
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
