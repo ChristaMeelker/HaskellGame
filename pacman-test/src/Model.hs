@@ -40,27 +40,66 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
 initialState :: GameState
 initialState = GameState (4,7) FaceRight (2,10) (10,7)
 
-drawField :: MazeField -> Point -> Picture
-drawField (MazeField a b) (x,y)
-  | a == Wall     = translate (x*20) (y*20) $ color blue $ rectangleSolid 20 20
-  | b == FoodDot  = translate (x*20) (y*20) $ color white $ circleSolid 4
-  | otherwise     = undefined
+-- This Method draws a MazeField on the right position of the grid
+drawField :: ((Float, Float), MazeField) -> Picture
+drawField ((x,y),MazeField a b)
+  | a == Wall     = translate (-250 + y*20) (-250 + x*20) $ color blue $ rectangleSolid 20 20
+  | b == FoodDot  = translate (-250 + y*20) (-250 + x*20) $ color white $ circleSolid 3
+  | otherwise     = color green $ circleSolid 6 -- TO DO: this last row has no meaning
 
+-- //BUILDING FIRST LEVEL MAZE//
 
--- TEST MAZE AAN HET MAKEN HIER  
+-- Wall
+w :: MazeField
+w = MazeField {field = Wall, content = Empty}
 
-wall :: MazeField
-wall = MazeField {field = Wall, content = Empty}
+-- Straightaway with FoodDot
+st :: MazeField
+st = MazeField {field = Straightaway, content = FoodDot}
 
-path :: MazeField
-path = MazeField {field = Straightaway, content = Empty}
+-- Empty Straightaway
+es :: MazeField
+es = MazeField {field = Straightaway, content = Empty}
 
-wallRow :: MazeRow
-wallRow = [wall, wall, wall, wall, wall]
+-- Intersection with FoodDot
+is :: MazeField
+is = MazeField {field = Intersection, content = FoodDot}
 
-otherRow :: MazeRow
-otherRow = [wall, path, path, path, wall]
+-- Empty Intersection
+ei :: MazeField
+ei = MazeField {field = Intersection, content = Empty}
 
-testMaze :: Maze
-testMaze = [wallRow, otherRow, otherRow, otherRow, wallRow]
+firstLevel :: Maze
+firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w],
+              [w, st, st, st, st, st, is, st, st, st, st, st, st, w,  w,  st, st, st, st, st, st, is, st, st, st, st, st, w],        
+              [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, is, st, st, st, st, is, st, st, is, st, st, is, st, st, is, st, st, is, st, st, is, st, st, st, st, is, w],
+              [w, st, w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  st, w],  
+              [w, st, w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, st, st, st, st, st, is, w,  w,  st, st, st, st, w,  w,  st, st, st, st, w,  w,  is, st, st, st, st, st, w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, es, es, es, es, es, es, es, es, es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  is, st, st, ei, w,  w,  w,  w,  w,  w,  w,  w,  ei, st, st, is, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  ei, es, es, es, es, es, es, es, es, ei, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, st, st, st, st, st, is, st, st, is, st, st, st, w,  w,  st, st, st, is, st, st, is, st, st, st, st, st, w],
+              [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
+              [w, st, st, st, w,  w,  is, st, st, is, st, st, st, st, st, st, st, st, is, st, st, is, w,  w,  st, st, st, w],
+              [w, w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w],
+              [w, w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w],
+              [w, st, st, is, st, st, st, w,  w,  st, st, st, st, w,  w,  st, st, st, st, w,  w,  st, st, st, is, st, st, w],
+              [w, st, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  st, w],
+              [w, st, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  st, w],
+              [w, st, st, st, st, st, st, st, st, st, st, st, is, st, st, is, st, st, st, st, st, st, st, st, st, st, st, w],
+              [w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w]]
+            
 

@@ -13,10 +13,10 @@ view :: GameState -> IO Picture
 view = return . viewPure
 
 viewPure :: GameState -> Picture
-viewPure gstate | pacmanDir gstate == FaceUp       = pictures $ [maze] ++ [foodDot] ++ [picturePacManUp]   
-                | pacmanDir gstate == FaceDown     = pictures $ [maze] ++ [foodDot] ++ [picturePacManDown] 
-                | pacmanDir gstate == FaceLeft     = pictures $ [maze] ++ [foodDot] ++ [picturePacManLeft] 
-                | pacmanDir gstate == FaceRight    = pictures $ [maze] ++ [foodDot] ++ [picturePacManRight] 
+viewPure gstate | pacmanDir gstate == FaceUp       = pictures $ firstLevelDrawing ++ [picturePacManUp]
+                | pacmanDir gstate == FaceDown     = pictures $ firstLevelDrawing ++ [picturePacManDown]
+                | pacmanDir gstate == FaceLeft     = pictures $ firstLevelDrawing ++ [picturePacManLeft]
+                | pacmanDir gstate == FaceRight    = pictures $ firstLevelDrawing ++ [picturePacManRight]
     where
         picturePacManUp :: Picture
         picturePacManUp = uncurry translate (pacmanPos gstate) $ color yellow $ Polygon [(-10,0),(10,0),(0,30)]
@@ -27,11 +27,20 @@ viewPure gstate | pacmanDir gstate == FaceUp       = pictures $ [maze] ++ [foodD
         picturePacManRight :: Picture
         picturePacManRight = uncurry translate (pacmanPos gstate) $ color yellow $ Polygon [(0,10),(0,-10),(30,0)]
 
-maze :: Picture
-maze = drawField MazeField {field = Wall, content = Empty} (2,5)
+-- //TURN MAZE INTO PICTURES//
 
-foodDot :: Picture
-foodDot = drawField MazeField {field = Straightaway, content = FoodDot} (3,5)
+-- Function to make a grid of length a x b
+grid :: (Num a, Num b, Enum a, Enum b) => a -> b -> [(a, b)]
+grid a b = [(x, y)| x <- [0..a-1], y <-[0..b-1]]
 
--- TO DO:
--- Mappen over de Maze. Daarbij indexen x en y meegegeven aan drawField.
+-- Make grid for the first level
+firstLevelGrid = grid 31 28
+
+-- Concat the firstLevel maze
+concatMaze = reverse (concat firstLevel)
+
+-- Zip the maze with the grid
+gridMaze = zip firstLevelGrid concatMaze
+
+-- Draw each field in the maze.
+firstLevelDrawing = map drawField gridMaze
