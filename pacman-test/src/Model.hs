@@ -21,6 +21,9 @@ data GameState = GameState { pacmanPos :: Point, pacmanDir :: Direction, pacmanS
 data Speed = Standing | Walking
   deriving (Eq)
 
+-- NOTE: waar gebruiken we data Player eigenlijk voor? playerPosition is hetzelfde als pacmanPos toch? Ik heb nu 
+-- pacmanSpeed toegevoegd, Player lijkt mij dan overbodig.  
+
 data Player = Player { playerPosition :: Point, playerStatus :: PlayerStatus }
 
 data Ghost = Ghost { ghostPosition :: Point, ghostStatus :: GhostStatus }
