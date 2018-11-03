@@ -16,7 +16,10 @@ instance Num Point where
   (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
   (x0, y0) + (x1, y1) = (x0 + x1, y0 + y1)
 
-data GameState = GameState { pacmanPos :: Point, pacmanDir :: Direction, blinkyPos :: Point, clydePos :: Point }
+data GameState = GameState { pacmanPos :: Point, pacmanDir :: Direction, pacmanSpeed :: Speed, blinkyPos :: Point, clydePos :: Point }
+
+data Speed = Standing | Walking
+  deriving (Eq)
 
 data Player = Player { playerPosition :: Point, playerStatus :: PlayerStatus }
 
@@ -43,7 +46,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
 
 initialState :: GameState
-initialState = GameState (4,7) FaceRight (2,10) (10,7)
+initialState = GameState (4,7) FaceRight Walking (2,10) (10,7)
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -53,6 +56,16 @@ drawField ((x,y),MazeField a b)
   | b == FoodDot   = translate (-432 + y * 32) (-496 + x * 32) $ color (makeColor 1 0.7255 0.6863 1) $ rectangleSolid 4 4
   | b == Energizer = translate (-432 + y * 32) (-496 + x * 32) $ color (makeColor 1 0.7255 0.6863 1) $ circleSolid 10
   | otherwise      = blank
+
+-- Function that returns position of Pacman in the grid.
+getGridPosition :: Point -> (Int,Int)
+getGridPosition (x,y) = (loseRest $ x/32, loseRest $ y/32) 
+  where loseRest x                  -- Lose everything after comma
+          | x >= 0    = floor x
+          | otherwise = ceiling x
+
+getNextGridPosition :: (Int,Int) -> GameState -> (Int,Int)
+getNextGridPosition = undefined
 
 --Function that returns a MazeField and its info from the maze when given a column and row
 getMazeField :: (Int,Int) -> Maze -> MazeField

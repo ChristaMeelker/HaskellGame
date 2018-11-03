@@ -16,12 +16,16 @@ import Data.List
 import Data.Maybe
 
 -- | Handle one iteration of the game
+-- Hier bepalen of volgende positie (getNextGridPosition) een muur is. Zo ja, stilstaan. Zo nee: doorlopen.
+-- Eerst pauze uitwerken. Dan bij raken van muur: Pauze.
+-- step is afhankelijk van speed van pacman. 
+
 step :: Float -> GameState -> IO GameState
-step secs (GameState a b c d)
-      | b == FaceUp         = return (movePacmanUp 1 (GameState a b c d))
-      | b == FaceDown       = return (movePacmanDown 1 (GameState a b c d))
-      | b == FaceLeft       = return (movePacmanLeft 1 (GameState a b c d))
-      | b == FaceRight      = return (movePacmanRight 1 (GameState a b c d))
+step secs (GameState a b c d e)
+      | b == FaceUp     = return (movePacmanUp 1 (GameState a b c d e))
+      | b == FaceDown   = return (movePacmanDown 1 (GameState a b c d e))
+      | b == FaceLeft   = return (movePacmanLeft 1 (GameState a b c d e))
+      | b == FaceRight  = return (movePacmanRight 1 (GameState a b c d e))             
  
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
@@ -37,16 +41,16 @@ inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate =  movePacmanRight 1 g
 inputKey _ gstate = gstate
 
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y + dy), pacmanDir = FaceUp}
+movePacmanUp dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y + dy), pacmanDir = FaceUp, pacmanSpeed = Walking}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y - dy), pacmanDir = FaceDown}
+movePacmanDown dy GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x, y - dy), pacmanDir = FaceDown, pacmanSpeed = Walking}
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x - dx, y), pacmanDir = FaceLeft}
+movePacmanLeft dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x - dx, y), pacmanDir = FaceLeft, pacmanSpeed = Walking}
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x + dx, y), pacmanDir = FaceRight}
+movePacmanRight dx GameState{pacmanPos = (x, y)} = GameState{pacmanPos = (x + dx, y), pacmanDir = FaceRight, pacmanSpeed = Walking}
 
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
