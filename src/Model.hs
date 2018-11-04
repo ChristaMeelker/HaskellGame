@@ -74,7 +74,7 @@ getMazeField (column,row) maze = (maze !! (row - 1)) !! (column - 1)
 
 -- Function to filter out all Fields that don't have the Straightaway FieldType
 filterField :: [MazeField] -> [MazeField]
-filterField fields = filter (\getField -> field getField == Straightaway) fields
+filterField = filter (\getField -> field getField == Straightaway)
 
 -- Function to gather all the surrounding MazeFields when a Ghost gets to an intersection.
 -- Always returns fields in the order left,front,right as seen from the direction of the Ghost.
@@ -96,7 +96,7 @@ getRandomNumber a b = randomRIO (a, b)
 -- ipv alleen mar een MazeField
 getRandomField :: (Int,Int) -> GameState -> IO MazeField
 getRandomField (column, row) gstate = do number <- getRandomNumber 0 upperBound
-                                         return ((fields) !! number)
+                                         return (fields !! number)
   where fields = getSurroundingFields (column,row) gstate
         upperBound = length fields
 
