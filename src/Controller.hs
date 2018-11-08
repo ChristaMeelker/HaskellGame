@@ -16,13 +16,21 @@ import Control.Monad
 import Data.List
 import Data.Maybe
 
--- | Handle one iteration of the game
--- Hier bepalen of volgende positie (getNextGridPosition) een muur is. Zo ja, stilstaan. Zo nee: doorlopen.
--- Eerst pauze uitwerken. Dan bij raken van muur: Pauze.
--- step is afhankelijk van speed van pacman. 
+{-
+Waar ik naar toe wil:
+Functie? Collision, die bij elke step wordt aangeroepen. 
+Collision krijgt GameState en Maze mee, en past deze eventueel aan.
+MAAR: Kunnen we de Maze eigenlijk wel aanpassen? 
+Collision pacman en muur: playerSpeed = Stopped
+Collision pacman en FoodDot: Punten omhoog en MazeField{content = Empty}
+Collision pacman en Energizer: Pacman gaat sneller lopen en status van ghosts verandert.
+Collision pacman en Ghost: Leven eraf
+-}
 
 step :: Float -> GameState -> IO GameState
-step secs gstate@GameState {pacman = Player {playerDirection = dir}}
+step secs gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed}}
+      | speed == Stopped  = return gstate
+      | nextMazeField gstate == MazeField {field = Wall, content = Empty}  = return (pausePacman gstate)
       | dir == FaceUp     = return (movePacmanUp 1 gstate)
       | dir == FaceDown   = return (movePacmanDown 1 gstate)
       | dir == FaceLeft   = return (movePacmanLeft 1 gstate)
@@ -34,24 +42,40 @@ input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
 -- If the user presses an arrow, update Pac-man's Location
-inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate    =  movePacmanUp 1 gstate
-inputKey (EventKey (SpecialKey KeyDown) Down _ _) gstate  =  movePacmanDown 1 gstate
-inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate  =  movePacmanLeft 1 gstate
-inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate =  movePacmanRight 1 gstate
+inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate    =  movePacmanUp 0 gstate
+inputKey (EventKey (SpecialKey KeyDown) Down _ _) gstate  =  movePacmanDown 0 gstate
+inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate  =  movePacmanLeft 0 gstate
+inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate =  movePacmanRight 0 gstate
+-- If the user presses F1, restart or pause game
+inputKey (EventKey (SpecialKey KeyF1) Down _ _) gstate =  pauseGame gstate
 -- Otherwise keep the same
 inputKey _ gstate = gstate
 
+-- This function changes the current speed of Pacman. 
+-- If current speed is normal, pacman stops.
+-- If current speed is stopped, pacman walks again.
+pauseGame :: GameState -> GameState
+pauseGame GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}}
+  | speed == Normal    = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Stopped}}
+  | speed == Stopped   = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Normal}}
+  | otherwise          = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}}
+
+-- This function stops pacman from walking. Is used when pacman hits a wall.  
+pausePacman :: GameState -> GameState
+pausePacman GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}} = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Stopped}}
+
+-- TO DO: ALLEEN DIR AANPASSEN ALS DAT DAADWERKELIJK KAN. NIET ALS WE TEGEN EEN MUUR AAN STAAN DUS.
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp}}
+movePacmanUp dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal}}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown}}
+movePacmanDown dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal}}
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft}}
+movePacmanLeft dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal}}
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight}}
+movePacmanRight dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal}}
 
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
