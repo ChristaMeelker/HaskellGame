@@ -47,7 +47,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
 
 initialState :: GameState
-initialState = GameState (Player (32,832) FaceRight Neutral Normal) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal)
+initialState = GameState (Player (80,816) FaceRight Neutral Stopped) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal)
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -87,10 +87,7 @@ The following functions convert grid(x,y) to maze(row,columns)
 
 -- Function that returns position of Pacman in the grid.
 getGridPosition :: Point -> (Int,Int)
-getGridPosition (x,y) = (loseRest $ x/32, loseRest $ y/32) 
-  where loseRest x                  -- Lose everything after comma
-          | x >= 0    = floor x
-          | otherwise = ceiling x
+getGridPosition (x,y) = (floor (x/32),ceiling (y/32))
 
 -- Function that returns column and row in maze based on position in the grid
 getMazeCoordinates :: (Int,Int) -> (Int,Int)
@@ -103,10 +100,11 @@ playerLocationInMaze (x,y) = getMazeCoordinates (getGridPosition (x,y))
 -- This function checks what the next Maze coordinates are
 nextGridPosition :: GameState -> (Int,Int)
 nextGridPosition GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
-  | dir == FaceUp     = playerLocationInMaze (x,y+32)
-  | dir == FaceDown   = playerLocationInMaze (x,y-32)
-  | dir == FaceLeft   = playerLocationInMaze (x-32,y)
-  | dir == FaceRight  = playerLocationInMaze (x+32,y)
+  | dir == FaceUp     = getMazeCoordinates(q,p+1)          -- playerLocationInMaze (x,y-32)
+  | dir == FaceDown   = getMazeCoordinates(q,p-1)          --playerLocationInMaze (x,y+32)
+  | dir == FaceLeft   = getMazeCoordinates(q-1,p)          --playerLocationInMaze (x-32,y)
+  | dir == FaceRight  = getMazeCoordinates(q+1,p)          --playerLocationInMaze (x+32,y)
+    where (q,p) = getGridPosition (x,y)
 
 --Function that returns a MazeField and its info from the maze when given a column and row
 getMazeField :: (Int,Int) -> Maze -> MazeField
