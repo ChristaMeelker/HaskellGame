@@ -69,23 +69,34 @@ pausePacman :: GameState -> GameState
 pausePacman GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}} = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Stopped}}
 
 -- TO DO: ALLEEN DIR AANPASSEN ALS DAT DAADWERKELIJK KAN. NIET ALS WE TEGEN EEN MUUR AAN STAAN DUS.
+-- TO DO: Om een of andere reden moest ik de lives en score aan deze functie toevoegen om ze afgebeeld te krijgen,
+-- omdat de viewPuire functie het programma liet crashen onder de vermelding "Missing field in record construction".
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal}}
+movePacmanUp dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal, playerLives = lives}}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal}}
+movePacmanDown dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal, playerLives = lives}}
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal}}
+movePacmanLeft dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal, playerLives = lives}}
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = GameState{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal}}
+movePacmanRight dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal, playerLives = lives}}
 
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 
-getRandomNumber :: Int -> Int -> IO Int
-getRandomNumber a b = randomRIO (a, b)
+changeScore :: Int -> GameState -> GameState
+changeScore points GameState{score} = GameState{score = score + points}
+
+decreaseLives :: GameState -> GameState
+decreaseLives GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives}} 
+  | playerLives > 1 = GameState{pacman = Player{playerLives = playerLives - 1}}
+  | otherwise = GameState{status = GameOver, pacman = Player{playerLives = playerLives - 1}}
 
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
@@ -135,6 +146,8 @@ clydeChaseTarget GameState{pacman = Player{playerPosition = (x0,y0), playerDirec
 clydeScatterTarget :: Point
 clydeScatterTarget = (1,36)
 
+-- GODEVERDOMME IK HAAT DEZE TYFUSTAAL WTF IS HET NUT VAN IO IK GA ECHT EEN AANSLAG PLEGEN ALS IK NA
+-- DEZE KLOTE OPDARCHT OOK MET DAT FUCKING TYFUS IO GEDOE TE MAKEN MOET HEBBEN ECHT MIJN GOD MAN IK WORD GEK HIERO
 getHighScore :: String -> IO String
 getHighScore = readFileStrict
 

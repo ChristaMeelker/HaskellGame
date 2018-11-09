@@ -17,25 +17,33 @@ instance Num Point where
   (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
   (x0, y0) + (x1, y1) = (x0 + x1, y0 + y1)
 
-data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze}
+data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
+  deriving (Show)
 
-data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Speed }
+data GameStatus = GameOn | GameOver
+  deriving (Show)
+
+data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Speed, playerLives :: Int }
+  deriving (Show)
 
 data Ghost = Ghost { ghostPosition :: Point, ghostDirection :: Direction, ghostStatus :: GhostStatus, ghostSpeed :: Speed }
+  deriving (Show)
 
 data Speed = Stopped | Normal | Running | Crawling
-  deriving (Eq)
+  deriving (Eq, Show)
 
 data PlayerStatus = Neutral | Energized
+  deriving (Show)
 
 data GhostStatus = Chase | Scatter | Frightened
+  deriving (Show)
 
 type Maze = [MazeRow]
 
 type MazeRow = [MazeField]
 
 data MazeField = MazeField { field :: FieldType, content :: ContentType }
-  deriving (Show, Eq)
+  deriving (Eq, Show)
 
 data FieldType = Straightaway | Intersection | Wall | GhostWall
   deriving (Eq, Show)
@@ -44,10 +52,10 @@ data ContentType = FoodDot | Energizer | Empty
   deriving (Eq, Show)
 
 data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
-  deriving (Eq, Enum, Bounded)
+  deriving (Eq, Enum, Bounded, Show)
 
 initialState :: GameState
-initialState = GameState (Player (48,944) FaceRight Neutral Normal) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel
+initialState = GameState (Player (48,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 1256 GameOn
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture

@@ -13,19 +13,20 @@ view :: GameState -> IO Picture
 view = return . viewPure
 
 viewPure :: GameState -> Picture
-viewPure gstate@GameState{pacman = Player{playerDirection = dir, playerPosition = (x, y)}} | dir == FaceUp    = pictures $ firstLevelDrawing ++ [picturePacManUp]
-                                                                                           | dir == FaceDown  = pictures $ firstLevelDrawing ++ [picturePacManDown]
-                                                                                           | dir == FaceLeft  = pictures $ firstLevelDrawing ++ [picturePacManLeft]
-                                                                                           | dir == FaceRight = pictures $ firstLevelDrawing ++ [picturePacManRight]
-    where
-        picturePacManUp :: Picture
-        picturePacManUp = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
-        picturePacManDown :: Picture
-        picturePacManDown = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
-        picturePacManLeft :: Picture
-        picturePacManLeft = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
-        picturePacManRight :: Picture
-        picturePacManRight = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection = dir, playerPosition = (x, y), playerLives = lives}} 
+  | dir == FaceUp    = pictures $ firstLevelDrawing ++ [picturePacManUp] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
+  | dir == FaceDown  = pictures $ firstLevelDrawing ++ [picturePacManDown] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
+  | dir == FaceLeft  = pictures $ firstLevelDrawing ++ [picturePacManLeft] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
+  | dir == FaceRight = pictures $ firstLevelDrawing ++ [picturePacManRight] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
+    where picturePacManUp = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+          picturePacManDown = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+          picturePacManLeft = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+          picturePacManRight = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+          pointsHeader = uncurry translate (-250, 540) $ color white $ scale 0.25 0.25 $ text "Score"
+          pointsText = uncurry translate (-250, 500) $ color white $ scale 0.25 0.25 $ text (show currentScore)
+          highScoreHeader = uncurry translate (-85, 540) $ color white $ scale 0.25 0.25 $ text "High Score"
+          livesHeader = uncurry translate (165, 540) $ color white $ scale 0.25 0.25 $ text "Lives"
+          livesText = uncurry translate (165, 500) $ color white $ scale 0.25 0.25 $ text (show lives)
 
 -- pacmanX :: IO Picture
 pacmandown = loadBMP "/bitmaps/pacman-down.bmp"
