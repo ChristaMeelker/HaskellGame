@@ -97,22 +97,33 @@ getMazeCoordinates (x,y) = (x, abs(y-30))
 playerLocationInMaze :: Point -> (Int,Int)
 playerLocationInMaze (x,y) = getMazeCoordinates (getGridPosition (x,y))
 
+-- This function checks what the Mazefield over 16px is. 
+fieldIn16 :: GameState -> MazeField
+fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
+  | dir == FaceUp     = getMazeField (playerLocationInMaze(x,y+16)) firstLevel
+  | dir == FaceDown   = getMazeField (playerLocationInMaze(x,y-16)) firstLevel
+  | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
+  | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
+
+{-
+//////// DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL /////////
 -- This function checks what the next Maze coordinates are
 nextGridPosition :: GameState -> (Int,Int)
 nextGridPosition GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
-  | dir == FaceUp     = getMazeCoordinates(q,p+1)          -- playerLocationInMaze (x,y-32)
-  | dir == FaceDown   = getMazeCoordinates(q,p-1)          --playerLocationInMaze (x,y+32)
-  | dir == FaceLeft   = getMazeCoordinates(q-1,p)          --playerLocationInMaze (x-32,y)
-  | dir == FaceRight  = getMazeCoordinates(q+1,p)          --playerLocationInMaze (x+32,y)
+  | dir == FaceUp     = getMazeCoordinates(q,p+1)          
+  | dir == FaceDown   = getMazeCoordinates(q,p-1)          
+  | dir == FaceLeft   = getMazeCoordinates(q-1,p)          
+  | dir == FaceRight  = getMazeCoordinates(q+1,p)          
     where (q,p) = getGridPosition (x,y)
-
---Function that returns a MazeField and its info from the maze when given a column and row
-getMazeField :: (Int,Int) -> Maze -> MazeField
-getMazeField (column,row) maze = (maze !! row) !! column
 
 -- Function that return the next MazeField, based on the direction of pacman
 nextMazeField :: GameState -> MazeField
 nextMazeField gstate = getMazeField (nextGridPosition gstate) firstLevel 
+-}
+
+--Function that returns a MazeField and its info from the maze when given a column and row
+getMazeField :: (Int,Int) -> Maze -> MazeField
+getMazeField (column,row) maze = (maze !! row) !! column
 
 -- Function to filter out all Fields that don't have the Straightaway FieldType
 filterField :: [MazeField] -> [MazeField]

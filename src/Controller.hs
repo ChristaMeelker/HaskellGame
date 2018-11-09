@@ -30,7 +30,7 @@ Collision pacman en Ghost: Leven eraf
 step :: Float -> GameState -> IO GameState
 step secs gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed}}
       | speed == Stopped  = return gstate
-      | nextMazeField gstate == MazeField{field = Wall, content = Empty}  = return gstate
+      | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
       | dir == FaceUp     = return (movePacmanUp 1 gstate)
       | dir == FaceDown   = return (movePacmanDown 1 gstate)
       | dir == FaceLeft   = return (movePacmanLeft 1 gstate)
