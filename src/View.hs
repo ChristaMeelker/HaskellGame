@@ -19,13 +19,19 @@ viewPure gstate@GameState{pacman = Player{playerDirection = dir, playerPosition 
                                                                                            | dir == FaceRight = pictures $ firstLevelDrawing ++ [picturePacManRight]
     where
         picturePacManUp :: Picture
-        picturePacManUp = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 11 9
+        picturePacManUp = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
         picturePacManDown :: Picture
-        picturePacManDown = uncurry translate (-448 + x,-512 + y) $ color red $ thickCircle 11 9
+        picturePacManDown = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
         picturePacManLeft :: Picture
-        picturePacManLeft = uncurry translate (-448 + x,-512 + y) $ color green $ thickCircle 11 9
+        picturePacManLeft = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
         picturePacManRight :: Picture
-        picturePacManRight = uncurry translate (-448 + x,-512 + y) $ color orange $ thickCircle 11 9
+        picturePacManRight = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
+
+-- pacmanX :: IO Picture
+pacmandown = loadBMP "/bitmaps/pacman-down.bmp"
+pacmanleft = loadBMP "/bitmaps/pacman-left.bmp"
+pacmanright = loadBMP "/bitmaps/pacman-right.bmp"
+pacmanup= loadBMP "/bitmaps/pacman-up.bmp"
 
 -- //TURN MAZE INTO PICTURES//
 

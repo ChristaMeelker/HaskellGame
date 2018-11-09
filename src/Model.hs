@@ -17,7 +17,7 @@ instance Num Point where
   (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
   (x0, y0) + (x1, y1) = (x0 + x1, y0 + y1)
 
-data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost}
+data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze}
 
 data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Speed }
 
@@ -47,7 +47,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
 
 initialState :: GameState
-initialState = GameState (Player (48,944) FaceRight Neutral Stopped) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal)
+initialState = GameState (Player (48,944) FaceRight Neutral Normal) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -105,8 +105,13 @@ fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = d
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
+eatFoodDotHelper :: MazeField -> MazeField
+eatFoodDotHelper MazeField{field = x} 
+  | x == Straightaway   = MazeField{field = x, content = Empty} 
+  | x == Intersection   = MazeField{field = x, content = Empty}  
+
 {-
-//////// DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL /////////
+// DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //
 -- This function checks what the next Maze coordinates are
 nextGridPosition :: GameState -> (Int,Int)
 nextGridPosition GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
