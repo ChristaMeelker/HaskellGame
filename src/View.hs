@@ -19,6 +19,16 @@ viewPure gstate@GameState{pacman = Player{playerDirection = dir, playerPosition 
                                                                                            | dir == FaceRight = pictures $ firstLevelDrawing ++ [picturePacManRight]
     where
         picturePacManUp :: Picture
+        picturePacManUp = uncurry translate (-464 + x,-384 + y) $ color yellow $ Polygon [(-10,0),(10,0),(0,32)]
+        picturePacManDown :: Picture
+        picturePacManDown = uncurry translate (-432 + x,-384 + y) $ color yellow $ Polygon [(-10,0),(10,0),(0,-32)]
+        picturePacManLeft :: Picture
+        picturePacManLeft = uncurry translate (-448 + x,-368 + y) $ color yellow $ Polygon [(0,10),(0,-10),(-32,0)]
+        picturePacManRight :: Picture
+        picturePacManRight = uncurry translate (-448 + x,-368 + y) $ color yellow $ Polygon [(0,10),(0,-10),(32,0)]
+
+        {-
+                picturePacManUp :: Picture
         picturePacManUp = uncurry translate (-448 + x,-400 + y) $ color yellow $ Polygon [(-10,0),(10,0),(0,32)]
         picturePacManDown :: Picture
         picturePacManDown = uncurry translate (-448 + x,-368 + y) $ color yellow $ Polygon [(-10,0),(10,0),(0,-32)]
@@ -27,6 +37,7 @@ viewPure gstate@GameState{pacman = Player{playerDirection = dir, playerPosition 
         picturePacManRight :: Picture
         picturePacManRight = uncurry translate (-464 + x,-384 + y) $ color yellow $ Polygon [(0,10),(0,-10),(32,0)]
 
+        -}
 -- //TURN MAZE INTO PICTURES//
 
 -- Function to make a grid of length a x b
