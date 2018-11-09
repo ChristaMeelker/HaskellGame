@@ -47,7 +47,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded)
 
 initialState :: GameState
-initialState = GameState (Player (32,832) FaceRight Neutral Stopped) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal)
+initialState = GameState (Player (48,944) FaceRight Neutral Stopped) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal)
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -87,11 +87,11 @@ The following functions convert grid(x,y) to maze(row,columns)
 
 -- Function that returns position of Pacman in the grid.
 getGridPosition :: Point -> (Int,Int)
-getGridPosition (x,y) = (floor (x/32),ceiling (y/32))
+getGridPosition (x,y) = (floor (x/32),floor (y/32))
 
 -- Function that returns column and row in maze based on position in the grid
 getMazeCoordinates :: (Int,Int) -> (Int,Int)
-getMazeCoordinates (x,y) = (x, abs(y-27)) 
+getMazeCoordinates (x,y) = (x, abs(y-30)) 
 
 -- This function combines the above two. To go straight from playerPosition (as in GameState) to Maze coordinates.
 playerLocationInMaze :: Point -> (Int,Int)
