@@ -57,7 +57,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded, Show)
 
 initialState :: GameState
-initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 1256 GameOn
+initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 0 GameOn
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -115,14 +115,12 @@ fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = d
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
-
 {-  
 eatFoodDotHelper :: MazeField -> MazeField
 eatFoodDotHelper MazeField{field = x} 
   | x == Straightaway   = MazeField{field = x, content = Empty} 
   | x == Intersection   = MazeField{field = x, content = Empty}  
 -}
-
 
 eatFoodDot :: (Int,Int) -> Maze -> Maze
 eatFoodDot (x,y) level = chunksOf 28 newMaze
@@ -225,7 +223,7 @@ ei = MazeField {field = Intersection, content = Empty}
 
 firstLevel :: Maze
 firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w],
-              [w, st, st, st, st, st, is, st, st, st, st, st, st, w,  w,  st, st, st, st, st, st, is, st, st, st, st, st, w],        
+              [w, st, st, st, st, st, is, st, st, st, st, st, st, w,  w,  st, st, st, st, st, st, st, st, st, st, st, st, w],        
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
               [w, se, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  se, w],
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],

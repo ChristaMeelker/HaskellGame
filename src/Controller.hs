@@ -7,7 +7,6 @@
 module Controller where
 
 import Model
-
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
@@ -16,27 +15,17 @@ import Control.Monad
 import Data.List
 import Data.Maybe
 
-{-
-Waar ik naar toe wil:
-Functie? Collision, die bij elke step wordt aangeroepen. 
-Collision krijgt GameState en Maze mee, en past deze eventueel aan.
-MAAR: Kunnen we de Maze eigenlijk wel aanpassen? 
-Collision pacman en muur: playerSpeed = Stopped
-Collision pacman en FoodDot: Punten omhoog en MazeField{content = Empty}
-Collision pacman en Energizer: Pacman gaat sneller lopen en status van ghosts verandert.
-Collision pacman en Ghost: Leven eraf
--}
-
 step :: Float -> GameState -> IO GameState
 step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}, maze = maze}
       | speed == Stopped  = return gstate        
       | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
-      -- | getMazeField(playerLocationInMaze(x,y)) firstLevel == MazeField{field = Straightaway, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
+      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Straightaway, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
+      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Intersection, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
       | otherwise  = makeStep gstate
 
 
 editGameState :: (Int,Int) -> GameState -> GameState
-editGameState (a,b) gstate@GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = oldMaze, score = score, status = status} = GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = newMaze, score = score, status = status}
+editGameState (a,b) gstate@GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = oldMaze, score = score, status = status} = GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = newMaze, score = score+1, status = status}
  where
     newMaze = eatFoodDot (a,b) oldMaze
 

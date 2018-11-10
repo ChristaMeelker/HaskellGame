@@ -44,6 +44,7 @@ grid a b = [(x, y)| x <- [0..a-1], y <-[0..b-1]]
 -- Make grid for the first level
 firstLevelGrid = grid 31 28
 
+{-
 -- Concat the firstLevel maze
 concatMaze :: [MazeField]
 concatMaze = reverse (concat firstLevel)
@@ -56,9 +57,11 @@ gridMaze = zip firstLevelGrid concatMaze
 firstLevelDrawing :: [Picture]
 firstLevelDrawing = map drawField gridMaze
 
+-}
+
 -- functie die van Maze naar drawing gaat
 mazeToDrawing :: Maze -> [Picture]
 mazeToDrawing level = map drawField gridMaze
   where 
-    concatMaze = reverse (concat level)
+    concatMaze = reverse (concat $ map reverse level)
     gridMaze = zip firstLevelGrid concatMaze
