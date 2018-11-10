@@ -7,6 +7,7 @@
 module Controller where
 
 import Model
+
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
@@ -15,6 +16,7 @@ import Control.Monad
 import Data.List
 import Data.Maybe
 
+-- Function that handles 1 iteration of the game.
 step :: Float -> GameState -> IO GameState
 step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze}
       | speed == Stopped                                              = return gstate        
@@ -26,9 +28,8 @@ step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirec
 
 -- This functions handles the removal of FoodDots of the maze in the gamestate. It also updates the score.      
 eatFoodDotsGameState :: (Int,Int) -> GameState -> GameState
-eatFoodDotsGameState (a,b) gstate@GameState{maze = oldMaze, score} = gstate{maze = newMaze, score = score + 1}
- where
-    newMaze = eatFoodDot (a,b) oldMaze
+eatFoodDotsGameState (a,b) gstate@GameState{maze = oldMaze, score} = gstate{maze = newMaze, score = score + 10}
+ where newMaze = eatFoodDot (a,b) oldMaze
     
 -- This function changes status of de game to GameLost    
 gameLostGameState :: GameState -> GameState
@@ -44,8 +45,7 @@ pauseGame gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition,
   | speed == Normal    = gstate {pacman = Player{playerSpeed = Stopped, playerPosition, playerDirection, playerLives}}
   | otherwise          = gstate {pacman = Player{playerSpeed = Normal, playerPosition, playerDirection, playerLives}}
 
-
--- Handle user input
+-- Function that handles user input
 input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
@@ -86,18 +86,19 @@ movePacmanRight :: Float -> GameState -> GameState
 movePacmanRight dx gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}} = 
   gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed, playerLives}}
       
-
-
+-- Function that calculates the distance between two provided points.
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 
+-- Function that updates the score provided by the GameState.
 changeScore :: Int -> GameState -> GameState
 changeScore points GameState{score} = GameState{score = score + points}
 
+-- Function that decreases the amount of lives Pacman has in the GameState.
+-- Whenever he has no lives left the status of the game is changed to GameOver.
 decreaseLives :: GameState -> GameState
-decreaseLives GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives}} 
-  | playerLives > 1 = GameState{pacman = Player{playerLives = playerLives - 1}}
-  | otherwise = GameState{status = GameLost, pacman = Player{playerLives = playerLives - 1}}
+decreaseLives GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives}} = 
+  GameState{pacman = Player{playerLives = playerLives - 1}}
 
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
@@ -108,15 +109,17 @@ determinePath targetTile possiblePaths = possiblePaths !! indexOfShortestDistanc
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
 
+-- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
+-- Blinky's target tile is the same as Pacman's position. 
 blinkyChaseTarget :: GameState -> Point
 blinkyChaseTarget GameState{pacman = Player{playerPosition = (x, y)}} = (x, y)
 
+-- Constant that defines Blinky's target tile when he is in Scatter mode.
 blinkyScatterTarget :: Point
 blinkyScatterTarget = (26,1)
 
--- Because of an overflow error in the original game, whenever Pac-man is facing upwards
--- Pinky's target is actually 4 tiles up and 4 tiles to the left, instead of the normal
--- 4 tiles infront of Pac-man. We chose not to implement this, but can be changed quite easily.
+-- Function that calculates Pinky's target tile when he is in Chase mode using the GameState.
+-- Pinky's target tile is four tiles in front of wherever Pacman is facing.
 pinkyChaseTarget :: GameState -> Point
 pinkyChaseTarget GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} 
   | dir == FaceUp   = (x, y - 4)
@@ -124,9 +127,13 @@ pinkyChaseTarget GameState{pacman = Player{playerPosition = (x,y), playerDirecti
   | dir == FaceLeft = (x - 4, y)
   | otherwise       = (x + 4, y)
 
+-- Constant that defines Pinky's target tile when he is in Scatter mode. 
 pinkyScatterTarget :: Point
 pinkyScatterTarget = (3,1)
 
+-- Function that calculates Inky's target tile when he is in Chase mode using the GameState.
+-- Inky's target tile is Blinky's position mirrored in the tile that is two tiles in front of
+-- wherever Pacman is facing.
 inkyChaseTarget :: GameState -> Point
 inkyChaseTarget GameState{pacman = Player{playerPosition = (x0,y0), playerDirection = dir}, blinky = Ghost{ghostPosition = (x1, y1)}} = mirrorPoint + mirrorDelta
   where mirrorPoint | dir == FaceUp   = (x0, y0 - 2)
@@ -135,23 +142,30 @@ inkyChaseTarget GameState{pacman = Player{playerPosition = (x0,y0), playerDirect
                     | otherwise       = (x0 + 2, y0)
         mirrorDelta = mirrorPoint - (x1, y1)
 
+-- Constant that defines Inky's target that he tries to reach when he is in Scatter mode.        
 inkyScatterTarget :: Point
 inkyScatterTarget = (28,36)
 
+-- Funtion that calculates Clyde's target tile when he is in Chase mode using the GameState.
+-- Clyde's target tile is the same as Blinky's target tile whenever Clyde is further than 8 tiles
+-- removed from Pacman and his Scatter target whenever he is less than 8 tiles away.
 clydeChaseTarget :: GameState -> Point
 clydeChaseTarget GameState{pacman = Player{playerPosition = (x0,y0), playerDirection = dir}, blinky = Ghost{ghostPosition = (x1, y1)}} 
   | distancePacmanClyde > 8 = blinkyChaseTarget GameState{pacman = Player{playerPosition = (x0, y0)}}
   | otherwise = clydeScatterTarget
     where distancePacmanClyde = calculateDistance (x0, y0) (x1, y1)
 
+-- Constant that defines Clyde's target tile when he is in Scatter mode.
 clydeScatterTarget :: Point
 clydeScatterTarget = (1,36)
 
--- GODEVERDOMME IK HAAT DEZE TYFUSTAAL WTF IS HET NUT VAN IO IK GA ECHT EEN AANSLAG PLEGEN ALS IK NA
--- DEZE KLOTE OPDARCHT OOK MET DAT FUCKING TYFUS IO GEDOE TE MAKEN MOET HEBBEN ECHT MIJN GOD MAN IK WORD GEK HIERO
+-- Funtion that gets the highscore from the specified file.
 getHighScore :: String -> IO String
 getHighScore = readFileStrict
 
+-- Function that gets the score at the end of the game as a parameter and uses this to
+-- update the highscore file, but only when to supplied score is higher than the score
+-- specified in the file.
 updateHighScore :: String -> String -> IO ()
 updateHighScore score file = do s <- getHighScore file
                                 when (s < score) $ writeFile file score

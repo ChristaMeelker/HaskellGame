@@ -56,6 +56,7 @@ data ContentType = FoodDot | Energizer | Empty
 data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded, Show)
 
+-- Constant that defines the initial state of the game.
 initialState :: GameState
 initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (80,944) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 0 GameOn
 
@@ -136,14 +137,18 @@ getMazeField (column,row) maze = (maze !! row) !! column
 filterField :: [MazeField] -> [MazeField]
 filterField = filter (\getField -> field getField == Straightaway)
 
--- Function to gather all the surrounding MazeFields when a Ghost gets to an intersection.
+-- Function that gathers all the surrounding MazeFields. To be used at an intersection.
 -- Always returns fields in the order left,front,right as seen from the direction of the Ghost.
-getSurroundingFields :: (Int,Int) -> GameState -> [MazeField]
-getSurroundingFields (column, row) GameState {pacman = Player {playerDirection = dir}}
-  | dir == FaceUp = filterField [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column + 1, row) firstLevel]
-  | dir == FaceDown = filterField [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]
-  | dir == FaceLeft = filterField [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]
-  | otherwise = filterField [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel]
+getSurroundingFields :: (Int,Int) -> Direction -> [MazeField]
+getSurroundingFields (column, row) dir
+  | dir == FaceUp = filterField upFields
+  | dir == FaceDown = filterField downFields
+  | dir == FaceLeft = filterField leftFields
+  | otherwise = filterField rightFields
+    where upFields = [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column + 2, row + 1) firstLevel]
+          downFields = [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]
+          leftFields = [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]
+          rightFields = [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel]
 
 -- Function to generate a random IO Int in a given range
 getRandomNumber :: Int -> Int -> IO Int
@@ -154,11 +159,18 @@ getRandomNumber a b = randomRIO (a, b)
 -- TODO: We houden nu niet de coördinaten bij van elke MazeField, maar de Ghost moet wel weten welke
 -- kant hij op moet, dus deze functie moet een nieuwe direction of toch een coördinaat in het Maze returnen
 -- ipv alleen mar een MazeField
+{-
 getRandomField :: (Int,Int) -> GameState -> IO MazeField
 getRandomField (column, row) gstate = do number <- getRandomNumber 0 upperBound
                                          return (fields !! number)
   where fields = getSurroundingFields (column,row) gstate
         upperBound = length fields
+-}
+
+-- Ik heb geen idee hoe ik Random moet gebruiken voor wat ik wil, dus deze functie moeten we dan maar
+-- gebruiken om het pad van Ghosts te bepalen als ze in Scatter mode zitten
+getScatterField :: (Int,Int) -> Direction -> MazeField
+getScatterField (column, row) dir = getSurroundingFields (column,row) dir !! 1
 
 -- This function checks whether a MazeField contains a FoodDot
 hasFoodDot :: MazeField -> Bool
@@ -168,40 +180,39 @@ hasFoodDot MazeField{content = x}
 
 -- This functions counts the number of FoodDots in the maze
 numberOfFoodDots :: Maze -> Int
-numberOfFoodDots maze = length $ filter (hasFoodDot) (concat maze)
-
-
+numberOfFoodDots maze = length $ filter hasFoodDot (concat maze)
 
 -- //BUILDING FIRST LEVEL MAZE//
 
--- Wall
+-- Constant the defines a MazeField with FieldType Wall and contentType Empty.
 w :: MazeField
 w = MazeField {field = Wall, content = Empty}
 
--- GhostWall
+-- Constant the defines a MazeField with FieldType GhostWall and contentType Empty.
 gw :: MazeField
 gw = MazeField {field = GhostWall, content = Empty}
 
--- Straightaway with FoodDot
+-- Constant the defines a MazeField with FieldType Straightaway and contentType FoodDot.
 st :: MazeField
 st = MazeField {field = Straightaway, content = FoodDot}
 
--- Straightaway with Energizer
+-- Constant the defines a MazeField with FieldType Straightaway and contentType Energizer.
 se :: MazeField
 se = MazeField {field = Straightaway, content = Energizer}
 
--- Empty Straightaway
+-- Constant the defines a MazeField with FieldType Straightaway and contentType Empty.
 es :: MazeField
 es = MazeField {field = Straightaway, content = Empty}
 
--- Intersection with FoodDot
+-- Constant the defines a MazeField with FieldType Intersection and contentType FoodDot.
 is :: MazeField
 is = MazeField {field = Intersection, content = FoodDot}
 
--- Empty Intersection
+-- Constant the defines a MazeField with FieldType Intersection and contentType Empty.
 ei :: MazeField
 ei = MazeField {field = Intersection, content = Empty}
 
+-- Constant that uses above defined definitions to build the Maze.
 firstLevel :: Maze
 firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w],
               [w, st, st, st, st, st, is, st, st, st, st, st, st, w,  w,  st, st, st, st, st, st, st, st, st, st, st, st, w],        
@@ -212,17 +223,17 @@ firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,
               [w, st, w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  st, w],  
               [w, st, w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  st, w],
               [w, st, st, st, st, st, is, w,  w,  st, st, st, st, w,  w,  st, st, st, st, w,  w,  is, st, st, st, st, st, w],
-              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
-              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  es, w,  w,  es, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  es, w,  w,  es, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, es, es, es, es, es, es, es, es, es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  gw, gw, w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  es, es, es, es, es, es, w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
-              [w, w,  w,  w,  w,  w,  is, st, st, ei, w,  es, es, es, es, es, es, w,  ei, st, st, is, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  is, es, es, ei, w,  es, es, es, es, es, es, w,  ei, es, es, is, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  es, es, es, es, es, es, w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  ei, es, es, es, es, es, es, es, es, ei, w,  w,  st, w,  w,  w,  w,  w,  w],
-              [w, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w],
-              [w, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, st, st, st, st, st, is, st, st, is, st, st, st, w,  w,  st, st, st, is, st, st, is, st, st, st, st, st, w],
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],

@@ -37,12 +37,6 @@ viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection 
           gameWonText = uncurry translate (-150, 0) $ color white $ scale 0.25 0.60 $ text "Congrats, you won!"
           gameLostText = uncurry translate (-150, 0) $ color white $ scale 0.25 0.60 $ text "Too bad, you lost!"          
 
--- pacmanX :: IO Picture
-pacmandown = loadBMP "/bitmaps/pacman-down.bmp"
-pacmanleft = loadBMP "/bitmaps/pacman-left.bmp"
-pacmanright = loadBMP "/bitmaps/pacman-right.bmp"
-pacmanup= loadBMP "/bitmaps/pacman-up.bmp"
-
 -- //TURN MAZE INTO PICTURES//
 
 -- This Method draws a MazeField on the right position of the grid
@@ -59,11 +53,12 @@ grid :: (Num a, Num b, Enum a, Enum b) => a -> b -> [(a, b)]
 grid a b = [(x, y)| x <- [0..a-1], y <-[0..b-1]]
 
 -- Make grid for the first level
+firstLevelGrid :: [(Float, Float)]
 firstLevelGrid = grid 31 28
 
 -- functie die van Maze naar drawing gaat
 mazeToDrawing :: Maze -> [Picture]
 mazeToDrawing level = map drawField gridMaze
   where 
-    concatMaze = reverse (concat $ map reverse level)
+    concatMaze = reverse (concatMap reverse level)
     gridMaze = zip firstLevelGrid concatMaze
