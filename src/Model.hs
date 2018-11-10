@@ -22,8 +22,8 @@ instance Num Point where
 data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
   deriving (Show)
 
-data GameStatus = GameOn | GameOver
-  deriving (Show)
+data GameStatus = GameOn | GameLost | GameWon
+  deriving (Eq, Show)
 
 data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Speed, playerLives :: Int }
   deriving (Show)
@@ -107,7 +107,7 @@ getMazeCoordinates (x,y) = (x, abs(y-30))
 playerLocationInMaze :: Point -> (Int,Int)
 playerLocationInMaze (x,y) = getMazeCoordinates (getGridPosition (x,y))
 
--- This function checks what the Mazefield over 16px is. 
+-- This function checks what the Mazefield over 16px is. This is useful, because pacman has a radius of 16px 
 fieldIn16 :: GameState -> MazeField
 fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
   | dir == FaceUp     = getMazeField (playerLocationInMaze(x,y+16)) firstLevel
@@ -115,33 +115,11 @@ fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = d
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
-{-  
-eatFoodDotHelper :: MazeField -> MazeField
-eatFoodDotHelper MazeField{field = x} 
-  | x == Straightaway   = MazeField{field = x, content = Empty} 
-  | x == Intersection   = MazeField{field = x, content = Empty}  
--}
-
 eatFoodDot :: (Int,Int) -> Maze -> Maze
 eatFoodDot (x,y) level = chunksOf 28 newMaze
   where
     concattedLevel = concat level
     newMaze = (element (y*28+x) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
-
-
-
--- Maze in een stuk aan elkaar. Dan zoveelste positie vervangen voor content - Empty. 
-
--- concat hele maze
--- pas zoveelste element aan
--- return als chunksOf 3
-
-
-
-
-testje = (element 3 .~ 9) [1,2,3,4,5]
-test = chunksOf 3 ['a'..'z']
-
 
 {-
 // DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //
@@ -190,6 +168,18 @@ getRandomField (column, row) gstate = do number <- getRandomNumber 0 upperBound
                                          return (fields !! number)
   where fields = getSurroundingFields (column,row) gstate
         upperBound = length fields
+
+-- This function checks whether a MazeField contains a FoodDot
+hasFoodDot :: MazeField -> Bool
+hasFoodDot MazeField{content = x} 
+    | x == FoodDot    = True
+    | otherwise       = False
+
+-- This functions counts the number of FoodDots in the maze
+numberOfFoodDots :: Maze -> Int
+numberOfFoodDots maze = length $ filter (hasFoodDot) (concat maze)
+
+
 
 -- //BUILDING FIRST LEVEL MAZE//
 

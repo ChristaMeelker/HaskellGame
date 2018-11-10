@@ -16,19 +16,26 @@ import Data.List
 import Data.Maybe
 
 step :: Float -> GameState -> IO GameState
-step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}, maze = maze}
+step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection = dir, playerSpeed = speed, playerLives = lives}, maze = maze}
       | speed == Stopped  = return gstate        
       | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
-      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Straightaway, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
-      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Intersection, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
+      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Straightaway, content = FoodDot}  = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
+      | getMazeField(playerLocationInMaze(x,y)) maze == MazeField{field = Intersection, content = FoodDot}  = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
+      | numberOfFoodDots maze == 0  = return $ gameWonGameState gstate      -- gameWon
+      | lives == 0                  = return $ gameLostGameState gstate      -- gameLost
+      -- | bots met ghost = lives -1 etc
       | otherwise  = makeStep gstate
 
-
-editGameState :: (Int,Int) -> GameState -> GameState
-editGameState (a,b) gstate@GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = oldMaze, score = score, status = status} = GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = newMaze, score = score+1, status = status}
+eatFoodDotsGameState :: (Int,Int) -> GameState -> GameState
+eatFoodDotsGameState (a,b) gstate@GameState{pacman = player, maze = oldMaze, score = score, status = status} = GameState {pacman = player, maze = newMaze, score = score+1, status = status}
  where
     newMaze = eatFoodDot (a,b) oldMaze
 
+gameLostGameState :: GameState -> GameState
+gameLostGameState GameState{pacman = player, status = _, score = score, maze = maze} = GameState{pacman = player, status = GameLost, score = score, maze = maze}
+
+gameWonGameState :: GameState -> GameState
+gameWonGameState GameState{pacman = player, status = _, score = score, maze = maze} = GameState{pacman = player, status = GameWon, score = score, maze = maze}
 
 makeStep :: GameState -> IO GameState
 makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed}}
@@ -56,10 +63,10 @@ inputKey _ gstate = gstate
 -- If current speed is normal, pacman stops.
 -- If current speed is stopped, pacman walks again.
 pauseGame :: GameState -> GameState
-pauseGame GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}}
-  | speed == Normal    = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Stopped}}
-  | speed == Stopped   = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Normal}}
-  | otherwise          = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}}
+pauseGame GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed, playerLives = lives}, maze = maze, score = score, status = status}
+  | speed == Normal    = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Stopped, playerLives = lives}, maze = maze, score = score, status = status}
+  | speed == Stopped   = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = Normal, playerLives = lives}, maze = maze, score = score, status = status}
+  | otherwise          = GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir, playerSpeed = speed, playerLives = lives}, maze = maze, score = score, status = status}
 
 -- This function stops pacman from walking. Is used when pacman hits a wall.  
 pausePacman :: GameState -> GameState
@@ -69,20 +76,20 @@ pausePacman GameState{pacman = Player{playerPosition = (x,y), playerDirection = 
 -- TO DO: Om een of andere reden moest ik de lives en score aan deze functie toevoegen om ze afgebeeld te krijgen,
 -- omdat de viewPuire functie het programma liet crashen onder de vermelding "Missing field in record construction".
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal, playerLives = lives}, maze = maze}
+movePacmanUp dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze, status = status} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal, playerLives = lives}, maze = maze, status = status}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal, playerLives = lives}, maze = maze}
+movePacmanDown dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze, status = status} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal, playerLives = lives}, maze = maze, status = status}
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal, playerLives = lives}, maze = maze}
+movePacmanLeft dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze, status = status} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal, playerLives = lives}, maze = maze, status = status}
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal, playerLives = lives}, maze = maze}
+movePacmanRight dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze, status = status} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal, playerLives = lives}, maze = maze, status = status}
 
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
@@ -93,7 +100,7 @@ changeScore points GameState{score} = GameState{score = score + points}
 decreaseLives :: GameState -> GameState
 decreaseLives GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives}} 
   | playerLives > 1 = GameState{pacman = Player{playerLives = playerLives - 1}}
-  | otherwise = GameState{status = GameOver, pacman = Player{playerLives = playerLives - 1}}
+  | otherwise = GameState{status = GameLost, pacman = Player{playerLives = playerLives - 1}}
 
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
