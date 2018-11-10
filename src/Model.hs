@@ -57,16 +57,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded, Show)
 
 initialState :: GameState
-initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 0 GameOn
-
--- This Method draws a MazeField on the right position of the grid
-drawField :: ((Float, Float), MazeField) -> Picture
-drawField ((x,y),MazeField a b)
-  | a == Wall      = translate (-432 + y * 32) (-496 + x * 32) $ color blue $ rectangleSolid 32 32
-  | a == GhostWall = translate (-432 + y * 32) (-496 + x * 32) $ color rose $ rectangleSolid 32 32
-  | b == FoodDot   = translate (-432 + y * 32) (-496 + x * 32) $ color (makeColor 1 0.7255 0.6863 1) $ rectangleSolid 4 4
-  | b == Energizer = translate (-432 + y * 32) (-496 + x * 32) $ color (makeColor 1 0.7255 0.6863 1) $ circleSolid 10
-  | otherwise      = blank
+initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (80,944) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 0 GameOn
 
 {-
 // SOME INFO ABOUT MAZE/GRID/PACMAN-POSITION STRUCTURE
