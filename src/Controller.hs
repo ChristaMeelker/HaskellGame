@@ -18,12 +18,13 @@ import Data.Maybe
 
 -- Function that handles 1 iteration of the game.
 step :: Float -> GameState -> IO GameState
-step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze}
+step secs gstate@GameState {score = currentScore, pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze}
       | speed == Stopped                                              = return gstate        
       | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
       | hasFoodDot (getMazeField(playerLocationInMaze(x,y)) maze)     = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
       | numberOfFoodDots maze == 0                                    = return $ gameWonGameState gstate      
-      | lives == 0                                                    = return $ gameLostGameState gstate     
+      | lives == 0                                                    = return $ gameLostGameState gstate
+      | lives == 0                                                    = updateScore (show currentScore) "highscore.txt" gstate
       | otherwise                                                     = makeStep gstate
 
 -- This functions handles the removal of FoodDots of the maze in the gamestate. It also updates the score.      
@@ -61,10 +62,10 @@ inputKey _ gstate = gstate -- Otherwise keep the same
 -- This functions calls a movePacman function, based on the current direction
 makeStep :: GameState -> IO GameState
 makeStep gstate@GameState {pacman = Player {playerDirection = dir}}
-      | dir == FaceUp     = return (movePacmanUp 1 gstate)
-      | dir == FaceDown   = return (movePacmanDown 1 gstate)
-      | dir == FaceLeft   = return (movePacmanLeft 1 gstate)
-      | dir == FaceRight  = return (movePacmanRight 1 gstate)             
+      | dir == FaceUp     = return (movePacmanUp 3 gstate)
+      | dir == FaceDown   = return (movePacmanDown 3 gstate)
+      | dir == FaceLeft   = return (movePacmanLeft 3 gstate)
+      | dir == FaceRight  = return (movePacmanRight 3 gstate)             
 
 -- This function changes the location and direction of pacman.
 movePacmanUp :: Float -> GameState -> GameState
@@ -169,6 +170,10 @@ getHighScore = readFileStrict
 updateHighScore :: String -> String -> IO ()
 updateHighScore score file = do s <- getHighScore file
                                 when (s < score) $ writeFile file score
+
+updateScore :: String -> String -> GameState -> IO GameState
+updateScore score file gstate = do updateHighScore score file
+                                   return gstate
 
 -- Below methodes taken from https://github.com/nh2/shake/blob/e0c4bda9943bfadc9383ec31cfe828d67879e8ca/Development/Shake/Derived.hs to circumvent the "open file resource busy (file is locked)" error
 hGetContentsStrict :: Handle -> IO String

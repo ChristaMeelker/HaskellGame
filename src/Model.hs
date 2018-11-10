@@ -109,9 +109,8 @@ fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = d
 
 eatFoodDot :: (Int,Int) -> Maze -> Maze
 eatFoodDot (x,y) level = chunksOf 28 newMaze
-  where
-    concattedLevel = concat level
-    newMaze = (element (y*28+x) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
+  where concattedLevel = concat level
+        newMaze = (element (y*28+x) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
 
 {-
 // DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //
