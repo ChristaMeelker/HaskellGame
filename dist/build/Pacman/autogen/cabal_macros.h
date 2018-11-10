@@ -44,6 +44,28 @@
   (major1) == 1 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_random */
 
+/* package split-0.2.3.3 */
+#ifndef VERSION_split
+#define VERSION_split "0.2.3.3"
+#endif /* VERSION_split */
+#ifndef MIN_VERSION_split
+#define MIN_VERSION_split(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  2 || \
+  (major1) == 0 && (major2) == 2 && (minor) <= 3)
+#endif /* MIN_VERSION_split */
+
+/* package lens-4.17 */
+#ifndef VERSION_lens
+#define VERSION_lens "4.17"
+#endif /* VERSION_lens */
+#ifndef MIN_VERSION_lens
+#define MIN_VERSION_lens(major1,major2,minor) (\
+  (major1) <  4 || \
+  (major1) == 4 && (major2) <  17 || \
+  (major1) == 4 && (major2) == 17 && (minor) <= 0)
+#endif /* MIN_VERSION_lens */
+
 /* tool alex-3.2.4 */
 #ifndef TOOL_VERSION_alex
 #define TOOL_VERSION_alex "3.2.4"
@@ -54,17 +76,6 @@
   (major1) == 3 && (major2) <  2 || \
   (major1) == 3 && (major2) == 2 && (minor) <= 4)
 #endif /* MIN_TOOL_VERSION_alex */
-
-/* tool cpphs-1.20.8 */
-#ifndef TOOL_VERSION_cpphs
-#define TOOL_VERSION_cpphs "1.20.8"
-#endif /* TOOL_VERSION_cpphs */
-#ifndef MIN_TOOL_VERSION_cpphs
-#define MIN_TOOL_VERSION_cpphs(major1,major2,minor) (\
-  (major1) <  1 || \
-  (major1) == 1 && (major2) <  20 || \
-  (major1) == 1 && (major2) == 20 && (minor) <= 8)
-#endif /* MIN_TOOL_VERSION_cpphs */
 
 /* tool gcc-7.2.0 */
 #ifndef TOOL_VERSION_gcc
@@ -177,7 +188,7 @@
 #endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "Pacman-0.1.0.0-DUmBR7NUot5GbLYQABPM3H-Pacman"
+#define CURRENT_COMPONENT_ID "Pacman-0.1.0.0-95QGbU7n5CL1YEmjf5CoPs-Pacman"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

@@ -38,7 +38,7 @@ getBinDir :: IO FilePath
 getBinDir = getPrefixDirRel bindirrel
 
 getLibDir :: IO FilePath
-getLibDir = getPrefixDirRel "x86_64-windows-ghc-8.4.3\\Pacman-0.1.0.0-DUmBR7NUot5GbLYQABPM3H-Pacman"
+getLibDir = getPrefixDirRel "x86_64-windows-ghc-8.4.3\\Pacman-0.1.0.0-95QGbU7n5CL1YEmjf5CoPs-Pacman"
 
 getDynLibDir :: IO FilePath
 getDynLibDir = getPrefixDirRel "x86_64-windows-ghc-8.4.3"
@@ -47,7 +47,7 @@ getDataDir :: IO FilePath
 getDataDir =  catchIO (getEnv "Pacman_datadir") (\_ -> getPrefixDirRel "x86_64-windows-ghc-8.4.3\\Pacman-0.1.0.0")
 
 getLibexecDir :: IO FilePath
-getLibexecDir = getPrefixDirRel "Pacman-0.1.0.0-DUmBR7NUot5GbLYQABPM3H-Pacman\\x86_64-windows-ghc-8.4.3\\Pacman-0.1.0.0"
+getLibexecDir = getPrefixDirRel "Pacman-0.1.0.0-95QGbU7n5CL1YEmjf5CoPs-Pacman\\x86_64-windows-ghc-8.4.3\\Pacman-0.1.0.0"
 
 getSysconfDir :: IO FilePath
 getSysconfDir = getPrefixDirRel "etc"

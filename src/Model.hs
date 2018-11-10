@@ -11,7 +11,9 @@ import Graphics.Gloss
 import System.Random
 import System.IO
 import Control.Monad
+import Control.Lens hiding (Empty)
 import Data.List
+import Data.List.Split
 
 instance Num Point where
   (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
@@ -55,7 +57,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
   deriving (Eq, Enum, Bounded, Show)
 
 initialState :: GameState
-initialState = GameState (Player (48,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 1256 GameOn
+initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (14,15) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 1256 GameOn
 
 -- This Method draws a MazeField on the right position of the grid
 drawField :: ((Float, Float), MazeField) -> Picture
@@ -113,10 +115,35 @@ fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = d
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
+
+{-  
 eatFoodDotHelper :: MazeField -> MazeField
 eatFoodDotHelper MazeField{field = x} 
   | x == Straightaway   = MazeField{field = x, content = Empty} 
   | x == Intersection   = MazeField{field = x, content = Empty}  
+-}
+
+
+eatFoodDot :: (Int,Int) -> Maze -> Maze
+eatFoodDot (x,y) level = chunksOf 28 newMaze
+  where
+    concattedLevel = concat level
+    newMaze = (element (y*28+x) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
+
+
+
+-- Maze in een stuk aan elkaar. Dan zoveelste positie vervangen voor content - Empty. 
+
+-- concat hele maze
+-- pas zoveelste element aan
+-- return als chunksOf 3
+
+
+
+
+testje = (element 3 .~ 9) [1,2,3,4,5]
+test = chunksOf 3 ['a'..'z']
+
 
 {-
 // DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //

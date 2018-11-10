@@ -31,7 +31,15 @@ step :: Float -> GameState -> IO GameState
 step secs gstate@GameState {pacman = Player {playerPosition = (x,y), playerDirection = dir, playerSpeed = speed}, maze = maze}
       | speed == Stopped  = return gstate        
       | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
+      -- | getMazeField(playerLocationInMaze(x,y)) firstLevel == MazeField{field = Straightaway, content = FoodDot}  = return (editGameState(playerLocationInMaze(x,y)) gstate)
       | otherwise  = makeStep gstate
+
+
+editGameState :: (Int,Int) -> GameState -> GameState
+editGameState (a,b) gstate@GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = oldMaze, score = score, status = status} = GameState { pacman = player, blinky = blinky, pinky = pinky, inky = inky, clyde = clyde , maze = newMaze, score = score, status = status}
+ where
+    newMaze = eatFoodDot (a,b) oldMaze
+
 
 makeStep :: GameState -> IO GameState
 makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed}}
@@ -72,20 +80,20 @@ pausePacman GameState{pacman = Player{playerPosition = (x,y), playerDirection = 
 -- TO DO: Om een of andere reden moest ik de lives en score aan deze functie toevoegen om ze afgebeeld te krijgen,
 -- omdat de viewPuire functie het programma liet crashen onder de vermelding "Missing field in record construction".
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal, playerLives = lives}}
+movePacmanUp dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = Normal, playerLives = lives}, maze = maze}
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal, playerLives = lives}}
+movePacmanDown dy GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = Normal, playerLives = lives}, maze = maze}
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal, playerLives = lives}}
+movePacmanLeft dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = Normal, playerLives = lives}, maze = maze}
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}} = 
-  GameState{score = currentScore, pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal, playerLives = lives}}
+movePacmanRight dx GameState{score = currentScore, pacman = Player{playerPosition = (x,y), playerDirection = dir, playerLives = lives}, maze = maze} = 
+  GameState{score = currentScore, pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = Normal, playerLives = lives}, maze = maze}
 
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)

@@ -13,11 +13,11 @@ view :: GameState -> IO Picture
 view = return . viewPure
 
 viewPure :: GameState -> Picture
-viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection = dir, playerPosition = (x, y), playerLives = lives}} 
-  | dir == FaceUp    = pictures $ firstLevelDrawing ++ [picturePacManUp] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
-  | dir == FaceDown  = pictures $ firstLevelDrawing ++ [picturePacManDown] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
-  | dir == FaceLeft  = pictures $ firstLevelDrawing ++ [picturePacManLeft] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
-  | dir == FaceRight = pictures $ firstLevelDrawing ++ [picturePacManRight] ++ [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
+viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection = dir, playerPosition = (x, y), playerLives = lives}, maze = level} 
+  | dir == FaceUp    = pictures $ (mazeToDrawing level) ++ [picturePacManUp] ++ allText
+  | dir == FaceDown  = pictures $ (mazeToDrawing level) ++ [picturePacManDown] ++ allText
+  | dir == FaceLeft  = pictures $ (mazeToDrawing level) ++ [picturePacManLeft] ++ allText
+  | dir == FaceRight = pictures $ (mazeToDrawing level) ++ [picturePacManRight] ++ allText
     where picturePacManUp = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
           picturePacManDown = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
           picturePacManLeft = uncurry translate (-448 + x,-512 + y) $ color yellow $ thickCircle 7 18
@@ -27,6 +27,7 @@ viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection 
           highScoreHeader = uncurry translate (-85, 540) $ color white $ scale 0.25 0.25 $ text "High Score"
           livesHeader = uncurry translate (165, 540) $ color white $ scale 0.25 0.25 $ text "Lives"
           livesText = uncurry translate (165, 500) $ color white $ scale 0.25 0.25 $ text (show lives)
+          allText = [pointsHeader] ++ [highScoreHeader] ++ [livesHeader] ++ [livesText] ++ [pointsText]
 
 -- pacmanX :: IO Picture
 pacmandown = loadBMP "/bitmaps/pacman-down.bmp"
@@ -44,10 +45,20 @@ grid a b = [(x, y)| x <- [0..a-1], y <-[0..b-1]]
 firstLevelGrid = grid 31 28
 
 -- Concat the firstLevel maze
+concatMaze :: [MazeField]
 concatMaze = reverse (concat firstLevel)
 
 -- Zip the maze with the grid
+gridMaze :: [((Float, Float), MazeField)]
 gridMaze = zip firstLevelGrid concatMaze
 
 -- Draw each field in the maze.
+firstLevelDrawing :: [Picture]
 firstLevelDrawing = map drawField gridMaze
+
+-- functie die van Maze naar drawing gaat
+mazeToDrawing :: Maze -> [Picture]
+mazeToDrawing level = map drawField gridMaze
+  where 
+    concatMaze = reverse (concat level)
+    gridMaze = zip firstLevelGrid concatMaze
