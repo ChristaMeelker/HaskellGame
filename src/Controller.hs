@@ -75,13 +75,13 @@ makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed =
 -- FUNCTIE DAT: ALS BLINKY TEGEN MUUR AAN LOOPT. RANDOM VAN RICHTING VERANDEREN.
 
 changeGhostdirection :: GameState -> GameState
-changeGhostdirection gstate@GameState{blinky = Ghost{ghostDirection = dir, ghostPosition}} 
-  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = FaceRight, ghostPosition}}
-  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
-  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
-  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
+changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} 
+  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
+  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
+  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
+  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
     where
-      --newDirection = determineDirection $ ghostPosition gstate
+       newDirection = determineDirection (x,y) gstate
 
 -- This function changes the location and direction of pacman.
 movePacmanUp :: Float -> GameState -> GameState
@@ -167,12 +167,12 @@ toInt = round
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
 -- to the target tile the order should be up > left > down > right.
 determineDirection :: Point -> GameState -> Direction
-determineDirection targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = possibleDirections !! indexOfShortestDistance
-  where distances = map (calculateDistance targetTile) possiblePoints 
+determineDirection targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}} = possibleDirections !! indexOfShortestDistance
+  where distances = map (calculateDistance (playerLocationInMaze targetTile)) possiblePoints 
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
-        possiblePoints = map trd3 (getSurroundingFields (playerLocationInMaze (x, y)) dir)
-        possibleDirections = map snd3 (getSurroundingFields (playerLocationInMaze (x, y)) dir)
+        possiblePoints = map trd3 (getSurroundingFields (playerLocationInMaze (a, b)) dir)
+        possibleDirections = map snd3 (getSurroundingFields (playerLocationInMaze (a, b)) dir)
 
 -- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
 -- Blinky's target tile is the same as Pacman's position. 
