@@ -144,18 +144,30 @@ getMazeField (column,row) maze = (maze !! row) !! column
 filterField :: [MazeField] -> [MazeField]
 filterField = filter (\getField -> field getField == Straightaway)
 
+fst3 :: (a, b, c) -> a
+fst3 (x,_,_) = x
+
+snd3 :: (a, b, c) -> b
+snd3 (_,y,_) = y
+
+trd3 :: (a, b, c) -> c
+trd3 (_,_,z) = z
+
+toPoint :: (Int,Int) -> Point
+toPoint (x,y) = (fromIntegral x :: Float, fromIntegral y :: Float)
+
 -- Function that gathers all the surrounding MazeFields. To be used at an intersection.
 -- Always returns fields in the order left,front,right as seen from the direction of the Ghost.
-getSurroundingFields :: (Int,Int) -> Direction -> [MazeField]
+getSurroundingFields :: (Int,Int) -> Direction -> [(MazeField, Direction, Point)]
 getSurroundingFields (column, row) dir
-  | dir == FaceUp = filterField upFields
-  | dir == FaceDown = filterField downFields
-  | dir == FaceLeft = filterField leftFields
-  | otherwise = filterField rightFields
-    where upFields = [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column + 2, row + 1) firstLevel]
-          downFields = [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]
-          leftFields = [getMazeField (column, row + 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]
-          rightFields = [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column + 1, row) firstLevel] ++ [getMazeField (column, row + 1) firstLevel]
+  | dir == FaceUp = filter ((\getField -> field getField == Straightaway).fst3) upFields
+  | dir == FaceDown = filter ((\getField -> field getField == Straightaway).fst3) downFields
+  | dir == FaceLeft = filter ((\getField -> field getField == Straightaway).fst3) leftFields 
+  | otherwise = filter ((\getField -> field getField == Straightaway).fst3) rightFields
+    where upFields = zip3 ([getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]) [FaceLeft, FaceUp, FaceRight] [toPoint(column - 1, row), toPoint(column, row - 1), toPoint(column + 1, row)]
+          downFields = zip3 ([getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel]) [FaceRight, FaceDown, FaceLeft] [toPoint(column + 1, row), toPoint(column, row + 1), toPoint(column - 1, row)]
+          leftFields = zip3 ([getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel]) [FaceDown, FaceLeft, FaceUp] [toPoint(column, row + 1), toPoint(column - 1, row), toPoint(column, row - 1)]
+          rightFields = zip3 ([getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]) [FaceUp, FaceRight, FaceDown] [toPoint(column, row - 1), toPoint(column + 1, row), toPoint(column, row + 1)]
 
 -- Function to generate a random IO Int in a given range
 getRandomNumber :: Int -> Int -> IO Int
