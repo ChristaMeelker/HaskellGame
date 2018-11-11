@@ -127,14 +127,19 @@ decreaseLives :: GameState -> GameState
 decreaseLives gstate@GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition}} = 
   gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (448,448)}}
 
+toInt :: Float -> Int
+toInt = round
+
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
 -- to the target tile the order should be up > left > down > right.
-determinePath :: Point -> [Point] -> Point
-determinePath targetTile possiblePaths = possiblePaths !! indexOfShortestDistance
-  where distances = map (calculateDistance targetTile) possiblePaths 
+determinePath :: Point -> GameState -> Direction
+determinePath targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = possibleDirections !! indexOfShortestDistance
+  where distances = map (calculateDistance targetTile) possiblePoints 
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
+        possiblePoints = map trd3 (getSurroundingFields (toInt x, toInt y) dir)
+        possibleDirections = map snd3 (getSurroundingFields (toInt x, toInt y) dir)
 
 -- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
 -- Blinky's target tile is the same as Pacman's position. 
