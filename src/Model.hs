@@ -55,7 +55,7 @@ instance Num Point where
 
 -- Constant that defines the initial state of the game.
 initialState :: GameState
-initialState = GameState (Player (448,240) FaceUp Neutral 3 3) (Ghost (240,314) FaceUp Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
+initialState = GameState (Player (48,896) FaceRight Neutral 3 3) (Ghost (240,314) FaceUp Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
 
 {-
 // SOME INFO ABOUT MAZE/GRID/PACMAN-POSITION STRUCTURE
@@ -112,26 +112,11 @@ fieldIn16Ghost GameState{blinky = Ghost {ghostPosition = (x,y), ghostDirection =
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
+-- This function deletes the FoodDot on the given location of a maze
 eatFoodDot :: Point -> Maze -> Maze
 eatFoodDot (x,y) level = chunksOf 28 newMaze
   where concattedLevel = concat level
         newMaze = (element (round(y*28+x)) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
-
-{-
-// DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //
--- This function checks what the next Maze coordinates are
-nextGridPosition :: GameState -> (Int,Int)
-nextGridPosition GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
-  | dir == FaceUp     = getMazeCoordinates(q,p+1)          
-  | dir == FaceDown   = getMazeCoordinates(q,p-1)          
-  | dir == FaceLeft   = getMazeCoordinates(q-1,p)          
-  | dir == FaceRight  = getMazeCoordinates(q+1,p)          
-    where (q,p) = getGridPosition (x,y)
-
--- Function that return the next MazeField, based on the direction of pacman
-nextMazeField :: GameState -> MazeField
-nextMazeField gstate = getMazeField (nextGridPosition gstate) firstLevel 
--}
 
 --Function that returns a MazeField and its info from the maze when given a column and row
 getMazeField :: Point -> Maze -> MazeField
@@ -201,8 +186,6 @@ hasFoodDot MazeField{content = x}
 -- This functions counts the number of FoodDots in the maze
 numberOfFoodDots :: Maze -> Int
 numberOfFoodDots maze = length $ filter hasFoodDot (concat maze)
-
-
 
 
 -- //BUILDING FIRST LEVEL MAZE//

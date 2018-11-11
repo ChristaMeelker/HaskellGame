@@ -71,18 +71,9 @@ makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed =
       | dir == FaceLeft   = return (movePacmanLeft speed gstate)
       | dir == FaceRight  = return (movePacmanRight speed gstate)             
 
--- FUNCTIE DAT: ALS BLINKY TEGEN MUUR AAN LOOPT. RANDOM VAN RICHTING VERANDEREN.
-
+-- This method changes the direction of the Ghost, based on the determineDirection function
 changeGhostdirection :: GameState -> GameState
-changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} 
-  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = FaceRight, ghostPosition}}
-  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
-  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
-  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
-
--- DEZE METHODE GEBRUIKEN ALS    determineDirection   WERKT!
-changeGhostdirection2 :: GameState -> GameState
-changeGhostdirection2 gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} =
+changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} =
   gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
     where newDirection = determineDirection ((x + 16) / 32, 31 - ((y - 16) / 32)) gstate
 
@@ -134,15 +125,11 @@ movePacmanRight dy gstate@GameState{pacman = Player{playerPosition = (x,y), play
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 
--- Function that updates the score provided by the GameState.
-changeScore :: Int -> GameState -> GameState
-changeScore points GameState{score} = GameState{score = score + points}
-
 -- Function that decreases the amount of lives Pacman has in the GameState.
 -- Whenever he has no lives left the status of the game is changed to GameOver.
 decreaseLives :: GameState -> GameState
 decreaseLives gstate@GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition}} = 
-  gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (448,448)}}
+  gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (48,48)}}
 
 -- TESTDATA LATEN STAAN SVP
 initialState2 :: GameState
