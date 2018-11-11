@@ -154,12 +154,12 @@ toInt = round
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
 -- to the target tile the order should be up > left > down > right.
 determineDirection :: Point -> GameState -> Direction
-determineDirection targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}} = possibleDirections !! indexOfShortestDistance
-  where distances = map (calculateDistance (playerLocationInMaze targetTile)) possiblePoints 
+determineDirection targetTile GameState{blinky = Ghost{ghostPosition = (x,y), ghostDirection = dir}} = possibleDirections !! indexOfShortestDistance
+  where distances = map (calculateDistance targetTile) possiblePoints 
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
-        possiblePoints = map trd3 (getSurroundingFields (playerLocationInMaze (a, b)) dir)
-        possibleDirections = map snd3 (getSurroundingFields (playerLocationInMaze (a, b)) dir)
+        possiblePoints = map trd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir)
+        possibleDirections = map snd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir)
 
 -- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
 -- Blinky's target tile is the same as Pacman's position. 
