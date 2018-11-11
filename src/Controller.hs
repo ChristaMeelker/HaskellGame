@@ -37,6 +37,7 @@ gameWonGameState :: String -> String -> GameState -> IO GameState
 gameWonGameState score file gstate = do updateHighScore score file
                                         return gstate {status = GameWon}
 
+-- Function that changes Pacman's speed to 0 and is used when the game gets paused.
 changePacmanSpeedToZero :: GameState -> GameState
 changePacmanSpeedToZero gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition, playerDirection, playerLives}} = gstate {pacman = Player{playerSpeed = 0, playerPosition, playerDirection, playerLives}}
 
@@ -79,12 +80,19 @@ changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), pl
 
 -- coordinatesX :: Float -> Float -> Float -> Point  
 -- These are used to change pacman's location in each direction
+coordinatesPacmanUp :: Float -> Float -> Float -> Point
 coordinatesPacmanUp x y dy = (x, y + dy)
+
+coordinatesPacmanDown :: Float -> Float -> Float -> Point
 coordinatesPacmanDown x y dy = (x, y - dy)
+
+coordinatesPacmanLeft :: Float -> Float -> Float -> Point
 coordinatesPacmanLeft x y dy = (x - dy, y)
+
+coordinatesPacmanRight :: Float -> Float -> Float -> Point
 coordinatesPacmanRight x y dy = (x + dy, y)
 
--- This function moves only Ghost       
+-- This function moves only the Ghost       
 moveGhostOnly :: Direction -> GameState -> GameState       
 moveGhostOnly dir gstate@GameState{pacman = Player{playerPosition, playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}} 
   | bdir == FaceUp      = gstate{pacman = Player{playerPosition, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
@@ -129,15 +137,18 @@ calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 -- Whenever he has no lives left the status of the game is changed to GameOver.
 decreaseLives :: GameState -> GameState
 decreaseLives gstate@GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition}} = 
-  gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (48,48)}}
+  gstate{pacman = Player{playerLives = playerLives - 1, playerPosition = (448,240), playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (448,624)}}
 
--- TESTDATA LATEN STAAN SVP
-initialState2 :: GameState
-initialState2 = GameState (Player (448,240) FaceUp Neutral 3 3) (Ghost (208,816) FaceUp Chase 0) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
+-- //
+-- // CODE THAT HAS TO DO WITH THE PATHFINDING OF THE GHOSTS //
+-- //
 
--- Right now if 2 tiles are the same distance from the target tile, the first tile
--- of these 2 is chosen, but it should be different. If two tiles have the same distance 
--- to the target tile the order should be up > left > down > right.
+-- This function uses the getSurroundigFields function defined in Model.hs to get the new direction of a Ghost when he gets to an intersection.
+-- The function is handed a targetTile, which corresponds to a grid in the Maze and the GameState and uses these to return the new Direction.
+-- For a detailed description of getSurroundigFields see Model.hs
+-- What this function does is calculate the distance from all fields to the targetTile and return the Direction of the field that puts the Ghost
+-- closest to his targetTile. The possible fields are sorted based on Direction, because there is a preference in Direction if 2 fields have the 
+-- same distance to the targetTile. This preference goes up > left > down > right and is also the reason why the Direction data type derives Ord.
 determineDirection :: Point -> GameState -> Direction
 determineDirection targetTile GameState{blinky = Ghost{ghostPosition = (x,y), ghostDirection = dir}} = possibleDirections !! indexOfShortestDistance
   where distances = map (calculateDistance targetTile) possiblePoints 
@@ -195,6 +206,10 @@ clydeChaseTarget GameState{pacman = Player{playerPosition = (x0,y0), playerDirec
 -- Constant that defines Clyde's target tile when he is in Scatter mode.
 clydeScatterTarget :: Point
 clydeScatterTarget = (1,36)
+
+-- //
+-- // CODE FOR READING FROM AND WRITING TO A FILE//
+-- //
 
 -- Funtion that gets the highscore from the specified file.
 getHighScore :: String -> IO String

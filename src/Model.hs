@@ -15,7 +15,7 @@ import Control.Lens hiding (Empty)
 import Data.List
 import Data.List.Split
 
-data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
+data GameState = GameState { pacman :: Player, blinky :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
   deriving (Show)
 
 data GameStatus = GameOn | GameLost | GameWon | GamePaused
@@ -55,7 +55,7 @@ instance Num Point where
 
 -- Constant that defines the initial state of the game.
 initialState :: GameState
-initialState = GameState (Player (48,896) FaceRight Neutral 3 3) (Ghost (240,314) FaceUp Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
+initialState = GameState (Player (448,240) FaceUp Neutral 3 3) (Ghost (448,624) FaceUp Chase 3) firstLevel 0 GameOn
 
 {-
 // SOME INFO ABOUT MAZE/GRID/PACMAN-POSITION STRUCTURE
@@ -129,15 +129,19 @@ getMazeField (column,row) maze = (maze !! rowInt) !! columnInt
 filterField :: [MazeField] -> [MazeField]
 filterField = filter (\getField -> field getField == Straightaway)
 
+-- Function that returns the first value of the given triple.
 fst3 :: (a, b, c) -> a
 fst3 (x,_,_) = x
 
+-- Function that returns the second value of the given triple.
 snd3 :: (a, b, c) -> b
 snd3 (_,y,_) = y
 
+-- Function that returns the third value of the given triple.
 trd3 :: (a, b, c) -> c
 trd3 (_,_,z) = z
 
+-- Function that converts a Int double to a Point.
 toPoint :: (Int,Int) -> Point
 toPoint (x,y) = (fromIntegral x :: Float, fromIntegral y :: Float)
 
@@ -154,29 +158,16 @@ getSurroundingFields (column, row) dir
           leftFields = zip3 ([getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel]) [FaceDown, FaceLeft, FaceUp] [(column, row + 1), (column - 1, row), (column, row - 1)]
           rightFields = zip3 ([getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]) [FaceUp, FaceRight, FaceDown] [(column, row - 1), (column + 1, row), (column, row + 1)]
 
--- Function to generate a random IO Int in a given range
-getRandomNumber :: Int -> Int -> IO Int
-getRandomNumber a b = randomRIO (a, b)
-
 -- Function that is given a list of MazeFields that er all Straightaway and returns a random MazeField
 -- to be used by Ghosts when they are in their Frightened mode.
--- TODO: We houden nu niet de coördinaten bij van elke MazeField, maar de Ghost moet wel weten welke
--- kant hij op moet, dus deze functie moet een nieuwe direction of toch een coördinaat in het Maze returnen
--- ipv alleen mar een MazeField
 {-
-getRandomField :: (Int,Int) -> GameState -> IO MazeField
-getRandomField (column, row) gstate = do number <- getRandomNumber 0 upperBound
-                                         return (fields !! number)
-  where fields = getSurroundingFields (column,row) gstate
+getRandomField :: Point -> Direction -> IO (MazeField, Direction, Point)
+getRandomField (column, row) dir = do number <- randomRIO (0, upperBound)
+                                      return (fields !! number)
+  where fields = getSurroundingFields (column,row) dir
         upperBound = length fields
 -}
 
--- Ik heb geen idee hoe ik Random moet gebruiken voor wat ik wil, dus deze functie moeten we dan maar
--- gebruiken om het pad van Ghosts te bepalen als ze in Scatter mode zitten
-{-
-getScatterField :: (Int,Int) -> Direction -> MazeField
-getScatterField (column, row) dir = getSurroundingFields (column,row) dir !! 1
--}
 -- This function checks whether a MazeField contains a FoodDot
 hasFoodDot :: MazeField -> Bool
 hasFoodDot MazeField{content = x} 
@@ -187,8 +178,9 @@ hasFoodDot MazeField{content = x}
 numberOfFoodDots :: Maze -> Int
 numberOfFoodDots maze = length $ filter hasFoodDot (concat maze)
 
-
+-- //
 -- //BUILDING FIRST LEVEL MAZE//
+-- //
 
 -- Constant the defines a MazeField with FieldType Wall and contentType Empty.
 w :: MazeField
@@ -232,7 +224,7 @@ firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,
               [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  es, w,  w,  es, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  es, w,  w,  es, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, es, es, es, es, es, es, es, es, es, w,  w,  st, w,  w,  w,  w,  w,  w],
-              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  gw, gw, w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
+              [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  w,  w,  w,  w,  w,  w,  w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  es, es, es, es, es, es, w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  is, es, es, ei, w,  es, es, es, es, es, es, w,  ei, es, es, is, w,  w,  w,  w,  w,  w],
               [w, w,  w,  w,  w,  w,  st, w,  w,  es, w,  es, es, es, es, es, es, w,  es, w,  w,  st, w,  w,  w,  w,  w,  w],
