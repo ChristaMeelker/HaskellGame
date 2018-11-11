@@ -7,21 +7,19 @@
 module Controller where
 
 import Model
-
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
 import System.IO
 import Control.Monad
-import Data.List
 import Data.Maybe
+import Data.List
 
 -- Function that handles 1 iteration of the game.
 step :: Float -> GameState -> IO GameState
 step secs gstate@GameState {score = currentScore, pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze} 
-      | numberOfFoodDots maze == 0                                    = return $ gameWonGameState gstate      
-      | lives == 0                                                    = return $ gameLostGameState gstate
-      | lives == 0                                                    = updateScore (show currentScore) "highscore.txt" gstate
+      | numberOfFoodDots maze == 0                                    = gameWonGameState (show currentScore) "highscore.txt" gstate      
+      | lives == 0                                                    = gameLostGameState (show currentScore) "highscore.txt" gstate
       | otherwise                                                     = makeStep gstate
 
 -- This functions handles the removal of FoodDots of the maze in the gamestate. It also updates the score.      
@@ -30,12 +28,14 @@ eatFoodDotsGameState (a,b) gstate@GameState{maze = oldMaze, score} = gstate{maze
  where newMaze = eatFoodDot (a,b) oldMaze
     
 -- This function changes status of de game to GameLost    
-gameLostGameState :: GameState -> GameState
-gameLostGameState gstate = gstate {status = GameLost}
+gameLostGameState :: String -> String -> GameState -> IO GameState
+gameLostGameState score file gstate = do updateHighScore score file
+                                         return gstate {status = GameLost}
 
 -- This function changes status of de game to GameWon   
-gameWonGameState :: GameState -> GameState
-gameWonGameState gstate = gstate {status = GameWon}
+gameWonGameState :: String -> String -> GameState -> IO GameState
+gameWonGameState score file gstate = do updateHighScore score file
+                                        return gstate {status = GameWon}
 
 changePacmanSpeedToZero :: GameState -> GameState
 changePacmanSpeedToZero gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition, playerDirection, playerLives}} = gstate {pacman = Player{playerSpeed = 0, playerPosition, playerDirection, playerLives}}
@@ -64,7 +64,7 @@ makeStep :: GameState -> IO GameState
 makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed, playerPosition = (x,y)},blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}, maze = maze, status = status}
       | status == GamePaused                                                 = return gstate
       | fieldIn16Ghost gstate == MazeField{field = Wall, content = Empty}    = return $ changeGhostdirection gstate
-      | playerLocationInMaze((x,y))  == playerLocationInMaze((a,b))          = return $ decreaseLives gstate
+      | playerLocationInMaze(x,y)  == playerLocationInMaze(a,b)              = return $ decreaseLives gstate
       | hasFoodDot (getMazeField(playerLocationInMaze(x,y)) maze)            = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
       | dir == FaceUp     = return (movePacmanUp speed gstate)
       | dir == FaceDown   = return (movePacmanDown speed gstate)
@@ -79,15 +79,12 @@ changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), pl
   | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
   | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
   | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
-    where
-       newDirection = determineDirection (x,y) gstate
 
 -- DEZE METHODE GEBRUIKEN ALS    determineDirection   WERKT!
 changeGhostdirection2 :: GameState -> GameState
 changeGhostdirection2 gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} =
   gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
-    where
-       newDirection = determineDirection (x,y) gstate
+    where newDirection = determineDirection ((x + 16) / 32, 31 - ((y - 16) / 32)) gstate
 
 -- coordinatesX :: Float -> Float -> Float -> Point  
 -- These are used to change pacman's location in each direction
@@ -147,8 +144,9 @@ decreaseLives :: GameState -> GameState
 decreaseLives gstate@GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition}} = 
   gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (448,448)}}
 
-toInt :: Float -> Int
-toInt = round
+-- TESTDATA LATEN STAAN SVP
+initialState2 :: GameState
+initialState2 = GameState (Player (448,240) FaceUp Neutral 3 3) (Ghost (208,816) FaceUp Chase 0) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
 
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
@@ -158,8 +156,8 @@ determineDirection targetTile GameState{blinky = Ghost{ghostPosition = (x,y), gh
   where distances = map (calculateDistance targetTile) possiblePoints 
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
-        possiblePoints = map trd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir)
-        possibleDirections = map snd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir)
+        possiblePoints = map trd3 (sortOn snd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir))
+        possibleDirections = map snd3 (sortOn snd3 (getSurroundingFields ((x + 16) / 32, 31 - ((y - 16) / 32)) dir))
 
 -- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
 -- Blinky's target tile is the same as Pacman's position. 
@@ -220,11 +218,7 @@ getHighScore = readFileStrict
 -- specified in the file.
 updateHighScore :: String -> String -> IO ()
 updateHighScore score file = do s <- getHighScore file
-                                when (s < score) $ writeFile file score
-
-updateScore :: String -> String -> GameState -> IO GameState
-updateScore score file gstate = do updateHighScore score file
-                                   return gstate
+                                when ((read s :: Int) < (read score :: Int)) $ writeFile file score
 
 -- Below methodes taken from https://github.com/nh2/shake/blob/e0c4bda9943bfadc9383ec31cfe828d67879e8ca/Development/Shake/Derived.hs to circumvent the "open file resource busy (file is locked)" error
 hGetContentsStrict :: Handle -> IO String

@@ -15,10 +15,6 @@ import Control.Lens hiding (Empty)
 import Data.List
 import Data.List.Split
 
-instance Num Point where
-  (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
-  (x0, y0) + (x1, y1) = (x0 + x1, y0 + y1)
-
 data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
   deriving (Show)
 
@@ -28,16 +24,13 @@ data GameStatus = GameOn | GameLost | GameWon | GamePaused
 data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Float, playerLives :: Int }
   deriving (Show)
 
-data Ghost = Ghost { ghostPosition :: Point, ghostDirection :: Direction, ghostStatus :: GhostStatus, ghostSpeed :: Float }
+data Ghost = Ghost { ghostPosition :: Point, ghostDirection :: Direction, ghostMode :: GhostMode, ghostSpeed :: Float }
   deriving (Show)
-
-data Speed = Stopped | Normal | Running | Crawling
-  deriving (Eq, Show)
 
 data PlayerStatus = Neutral | Energized
   deriving (Show)
 
-data GhostStatus = Chase | Scatter | Frightened
+data GhostMode = Chase | Scatter | Frightened
   deriving (Show)
 
 type Maze = [MazeRow]
@@ -53,12 +46,16 @@ data FieldType = Straightaway | Intersection | Wall | GhostWall
 data ContentType = FoodDot | Energizer | Empty
   deriving (Eq, Show)
 
-data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
-  deriving (Eq, Enum, Bounded, Show)
+data Direction = FaceUp | FaceLeft | FaceDown | FaceRight
+  deriving (Eq, Show, Ord)
+
+instance Num Point where
+  (x0, y0) - (x1, y1) = (x0 - x1, y0 - y1)
+  (x0, y0) + (x1, y1) = (x0 + x1, y0 + y1)
 
 -- Constant that defines the initial state of the game.
 initialState :: GameState
-initialState = GameState (Player (48,944) FaceDown Neutral 3 3) (Ghost (176,944) FaceRight Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
+initialState = GameState (Player (448,240) FaceUp Neutral 3 3) (Ghost (240,314) FaceUp Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
 
 {-
 // SOME INFO ABOUT MAZE/GRID/PACMAN-POSITION STRUCTURE
@@ -263,7 +260,7 @@ firstLevel = [[w, w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,  w,
               [w, st, st, st, st, st, is, st, st, is, st, st, st, w,  w,  st, st, st, is, st, st, is, st, st, st, st, st, w],
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
               [w, st, w,  w,  w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  st, w,  w,  w,  w,  st, w],
-              [w, se, st, st, w,  w,  is, st, st, is, st, st, st, st, st, st, st, st, is, st, st, is, w,  w,  st, st, se, w],
+              [w, se, st, st, w,  w,  is, st, st, is, st, st, st, es, es, st, st, st, is, st, st, is, w,  w,  st, st, se, w],
               [w, w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w],
               [w, w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w,  w,  w,  w,  w,  w,  st, w,  w,  st, w,  w,  st, w,  w,  w],
               [w, st, st, is, st, st, st, w,  w,  st, st, st, st, w,  w,  st, st, st, st, w,  w,  st, st, st, is, st, st, w],
