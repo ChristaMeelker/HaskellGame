@@ -65,7 +65,6 @@ makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed =
       | status == GamePaused                                                 = return gstate
       | fieldIn16Ghost gstate == MazeField{field = Wall, content = Empty}    = return $ changeGhostdirection gstate
       | playerLocationInMaze((x,y))  == playerLocationInMaze((a,b))          = return $ decreaseLives gstate
-      -- | fieldIn16 gstate == MazeField{field = Wall, content = Empty}         = return $ changePacmanSpeedToZero gstate
       | hasFoodDot (getMazeField(playerLocationInMaze(x,y)) maze)            = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
       | dir == FaceUp     = return (movePacmanUp speed gstate)
       | dir == FaceDown   = return (movePacmanDown speed gstate)
@@ -76,75 +75,63 @@ makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed =
 
 changeGhostdirection :: GameState -> GameState
 changeGhostdirection gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} 
-  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
-  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
-  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
-  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
+  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = FaceRight, ghostPosition}}
+  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
+  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
+  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
     where
        newDirection = determineDirection (x,y) gstate
 
--- This function changes the location and direction of pacman.
-movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
-  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} =
-    case bdir of
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
-  | otherwise     = 
-    case bdir of    
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}} 
+-- DEZE METHODE GEBRUIKEN ALS    determineDirection   WERKT!
+changeGhostdirection2 :: GameState -> GameState
+changeGhostdirection2 gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = dir, ghostPosition}} =
+  gstate{blinky = Ghost{ghostDirection = newDirection, ghostPosition}}
+    where
+       newDirection = determineDirection (x,y) gstate
 
+-- coordinatesX :: Float -> Float -> Float -> Point  
+-- These are used to change pacman's location in each direction
+coordinatesPacmanUp x y dy = (x, y + dy)
+coordinatesPacmanDown x y dy = (x, y - dy)
+coordinatesPacmanLeft x y dy = (x - dy, y)
+coordinatesPacmanRight x y dy = (x + dy, y)
+
+-- This function moves only Ghost       
+moveGhostOnly :: Direction -> GameState -> GameState       
+moveGhostOnly dir gstate@GameState{pacman = Player{playerPosition, playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}} 
+  | bdir == FaceUp      = gstate{pacman = Player{playerPosition, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
+  | bdir == FaceDown    = gstate{pacman = Player{playerPosition, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
+  | bdir == FaceLeft    = gstate{pacman = Player{playerPosition, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
+  | bdir == FaceRight   = gstate{pacman = Player{playerPosition, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
+
+-- This functions moves both pacman and Ghost in the right direction
+movePacmanAndGhost :: Direction -> Point -> GameState -> GameState
+movePacmanAndGhost dir changedCoordinates gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | bdir == FaceUp      = gstate{pacman = Player{playerPosition = changedCoordinates, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
+  | bdir == FaceDown    = gstate{pacman = Player{playerPosition = changedCoordinates, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
+  | bdir == FaceLeft    = gstate{pacman = Player{playerPosition = changedCoordinates, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
+  | bdir == FaceRight   = gstate{pacman = Player{playerPosition = changedCoordinates, playerDirection = dir, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
+
+-- These functions changes the location and direction of pacman.
+movePacmanUp :: Float -> GameState -> GameState
+movePacmanUp dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} = moveGhostOnly FaceUp gstate
+  | otherwise     = movePacmanAndGhost FaceUp (coordinatesPacmanUp x y speed) gstate
 
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
-  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} =
-    case bdir of
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
-  | otherwise     = 
-    case bdir of    
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}} 
+movePacmanDown dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} = moveGhostOnly FaceDown gstate
+  | otherwise     = movePacmanAndGhost FaceDown (coordinatesPacmanDown x y speed) gstate
 
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
-  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} =
-    case bdir of
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
-  | otherwise     = 
-    case bdir of    
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x - dy, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x - dy, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x - dy, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x - dy, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}} 
+movePacmanLeft dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} = moveGhostOnly FaceLeft gstate
+  | otherwise     = movePacmanAndGhost FaceLeft (coordinatesPacmanLeft x y speed) gstate
 
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
-  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} =
-    case bdir of
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}}
-  | otherwise     = 
-    case bdir of    
-      FaceUp       -> gstate{pacman = Player{playerPosition = (x + dy, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + 3)}}
-      FaceDown     -> gstate{pacman = Player{playerPosition = (x + dy, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - 3)}}
-      FaceLeft     -> gstate{pacman = Player{playerPosition = (x + dy, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - 3,b)}}
-      FaceRight    -> gstate{pacman = Player{playerPosition = (x + dy, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + 3,b)}} 
-
+movePacmanRight dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | fieldIn16 gstate == MazeField{field = Wall, content = Empty} = moveGhostOnly FaceRight gstate
+  | otherwise     = movePacmanAndGhost FaceRight (coordinatesPacmanRight x y speed) gstate
  
 -- Function that calculates the distance between two provided points.
 calculateDistance :: Point -> Point -> Float
