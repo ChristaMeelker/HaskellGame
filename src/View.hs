@@ -14,9 +14,9 @@ view = return . viewPure
 
 viewPure :: GameState -> Picture
 viewPure gstate@GameState{score = currentScore, pacman = Player{playerDirection = dir, playerPosition = (x, y), playerLives = lives, playerSpeed = speed}, blinky = Ghost{ghostPosition = (a,b), ghostDirection = bdir}, maze = level, status = status}
-  | speed == Stopped    = pictures $ allGameInfoText ++ [pauseText]
-  | status == GameWon   = pictures $ allGameInfoText ++ [gameWonText]
-  | status == GameLost  = pictures $ allGameInfoText ++ [gameLostText]
+  | status == GamePaused    = pictures $ allGameInfoText ++ [pauseText]
+  | status == GameWon       = pictures $ allGameInfoText ++ [gameWonText]
+  | status == GameLost      = pictures $ allGameInfoText ++ [gameLostText]
   | dir == FaceUp    = pictures $ (mazeToDrawing level) ++ [picturePacManUp] ++ ghosts ++ allGameInfoText
   | dir == FaceDown  = pictures $ (mazeToDrawing level) ++ [picturePacManDown] ++ ghosts ++ allGameInfoText
   | dir == FaceLeft  = pictures $ (mazeToDrawing level) ++ [picturePacManLeft] ++ ghosts ++ allGameInfoText

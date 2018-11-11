@@ -18,10 +18,7 @@ import Data.Maybe
 
 -- Function that handles 1 iteration of the game.
 step :: Float -> GameState -> IO GameState
-step secs gstate@GameState {score = currentScore, pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze}
-      | speed == Stopped                                              = return gstate        
-      | fieldIn16 gstate == MazeField{field = Wall, content = Empty}  = return gstate
-      | hasFoodDot (getMazeField(playerLocationInMaze(x,y)) maze)     = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
+step secs gstate@GameState {score = currentScore, pacman = Player {playerPosition = (x,y), playerDirection, playerSpeed = speed, playerLives = lives}, maze = maze} 
       | numberOfFoodDots maze == 0                                    = return $ gameWonGameState gstate      
       | lives == 0                                                    = return $ gameLostGameState gstate
       | lives == 0                                                    = updateScore (show currentScore) "highscore.txt" gstate
@@ -40,11 +37,14 @@ gameLostGameState gstate = gstate {status = GameLost}
 gameWonGameState :: GameState -> GameState
 gameWonGameState gstate = gstate {status = GameWon}
 
--- This function changes the current speed of Pacman. Used to pause the game
+changePacmanSpeedToZero :: GameState -> GameState
+changePacmanSpeedToZero gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition, playerDirection, playerLives}} = gstate {pacman = Player{playerSpeed = 0, playerPosition, playerDirection, playerLives}}
+
+-- This changes status and gets everyone's speed to 0.
 pauseGame :: GameState -> GameState
-pauseGame gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition, playerDirection, playerLives}}
-  | speed == Normal    = gstate {pacman = Player{playerSpeed = Stopped, playerPosition, playerDirection, playerLives}}
-  | otherwise          = gstate {pacman = Player{playerSpeed = Normal, playerPosition, playerDirection, playerLives}}
+pauseGame gstate@GameState {pacman = Player{playerSpeed = speed, playerPosition, playerDirection, playerLives}, blinky = Ghost{ghostDirection, ghostPosition, ghostSpeed = bspeed}, status = status}
+  | status == GamePaused       = gstate {pacman = Player{playerSpeed = 3, playerPosition, playerDirection, playerLives}, blinky = Ghost{ghostDirection, ghostPosition, ghostSpeed = 3}, status = GameOn}
+  | otherwise                  = gstate {pacman = Player{playerSpeed = 0, playerPosition, playerDirection, playerLives}, blinky = Ghost{ghostDirection, ghostPosition, ghostSpeed = 0}, status = GamePaused}
 
 -- Function that handles user input
 input :: Event -> GameState -> IO GameState
@@ -56,37 +56,63 @@ inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate    =  movePacmanUp 0 gsta
 inputKey (EventKey (SpecialKey KeyDown) Down _ _) gstate  =  movePacmanDown 0 gstate
 inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate  =  movePacmanLeft 0 gstate
 inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate =  movePacmanRight 0 gstate
-inputKey (EventKey (SpecialKey KeyF1) Down _ _) gstate =  pauseGame gstate  -- If the user presses F1, pause game
+inputKey (EventKey (SpecialKey KeyF1) Down _ _) gstate    =  pauseGame gstate  -- If the user presses F1, pause game
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 -- This functions calls a movePacman function, based on the current direction
 makeStep :: GameState -> IO GameState
-makeStep gstate@GameState {pacman = Player {playerDirection = dir}}
-      | dir == FaceUp     = return (movePacmanUp 3 gstate)
-      | dir == FaceDown   = return (movePacmanDown 3 gstate)
-      | dir == FaceLeft   = return (movePacmanLeft 3 gstate)
-      | dir == FaceRight  = return (movePacmanRight 3 gstate)             
+makeStep gstate@GameState {pacman = Player {playerDirection = dir, playerSpeed = speed, playerPosition = (x,y)},blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}, maze = maze, status = status}
+      | status == GamePaused                                                 = return gstate
+      | fieldIn16Ghost gstate == MazeField{field = Wall, content = Empty}    = return $ changeGhostdirection gstate
+      | playerLocationInMaze((x,y))  == playerLocationInMaze((a,b))          = return $ decreaseLives gstate
+      | fieldIn16 gstate == MazeField{field = Wall, content = Empty}         = return $ changePacmanSpeedToZero gstate
+      | hasFoodDot (getMazeField(playerLocationInMaze(x,y)) maze)            = return (eatFoodDotsGameState(playerLocationInMaze(x,y)) gstate)
+      | dir == FaceUp     = return (movePacmanUp speed gstate)
+      | dir == FaceDown   = return (movePacmanDown speed gstate)
+      | dir == FaceLeft   = return (movePacmanLeft speed gstate)
+      | dir == FaceRight  = return (movePacmanRight speed gstate)             
+
+-- FUNCTIE DAT: ALS BLINKY TEGEN MUUR AAN LOOPT. RANDOM VAN RICHTING VERANDEREN.
+
+changeGhostdirection :: GameState -> GameState
+changeGhostdirection gstate@GameState{blinky = Ghost{ghostDirection = dir, ghostPosition}} 
+  | dir == FaceUp     = gstate{blinky = Ghost{ghostDirection = FaceRight, ghostPosition}}
+  | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
+  | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
+  | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
 
 -- This function changes the location and direction of pacman.
 movePacmanUp :: Float -> GameState -> GameState
-movePacmanUp dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}} = 
-  gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed, playerLives}}
+movePacmanUp dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | bdir == FaceUp       = gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + dy)}}
+  | bdir == FaceDown     = gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - dy)}}
+  | bdir == FaceLeft     = gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - dy,b)}}
+  | bdir == FaceRight    = gstate{pacman = Player{playerPosition = (x, y + dy), playerDirection = FaceUp, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + dy,b)}}
 
 -- This function changes the location and direction of pacman.
 movePacmanDown :: Float -> GameState -> GameState
-movePacmanDown dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}} = 
-  gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed, playerLives}}
+movePacmanDown dy gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | bdir == FaceUp       = gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + dy)}}
+  | bdir == FaceDown     = gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - dy)}}
+  | bdir == FaceLeft     = gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - dy,b)}}
+  | bdir == FaceRight    = gstate{pacman = Player{playerPosition = (x, y - dy), playerDirection = FaceDown, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + dy,b)}}
 
 -- This function changes the location and direction of pacman.  
 movePacmanLeft :: Float -> GameState -> GameState
-movePacmanLeft dx gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}} = 
-  gstate{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed, playerLives}}
+movePacmanLeft dx gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | bdir == FaceUp       = gstate{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + dx)}}
+  | bdir == FaceDown     = gstate{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - dx)}}
+  | bdir == FaceLeft     = gstate{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - dx,b)}}
+  | bdir == FaceRight    = gstate{pacman = Player{playerPosition = (x - dx, y), playerDirection = FaceLeft, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + dx,b)}}
 
 -- This function changes the location and direction of pacman.  
 movePacmanRight :: Float -> GameState -> GameState
-movePacmanRight dx gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}} = 
-  gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed, playerLives}}
-      
+movePacmanRight dx gstate@GameState{pacman = Player{playerPosition = (x,y), playerDirection, playerSpeed, playerLives}, blinky = Ghost{ghostDirection = bdir, ghostPosition = (a,b)}}
+  | bdir == FaceUp       = gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceUp, ghostPosition = (a,b + dx)}}
+  | bdir == FaceDown     = gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceDown, ghostPosition = (a,b - dx)}}
+  | bdir == FaceLeft     = gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceLeft, ghostPosition = (a - dx,b)}}
+  | bdir == FaceRight    = gstate{pacman = Player{playerPosition = (x + dx, y), playerDirection = FaceRight, playerSpeed = 3, playerLives}, blinky = Ghost{ghostDirection = FaceRight, ghostPosition = (a + dx,b)}}
+   
 -- Function that calculates the distance between two provided points.
 calculateDistance :: Point -> Point -> Float
 calculateDistance (x1, y1) (x2, y2) = sqrt((x2 - x1)^2 + (y2 - y1)^2)
@@ -98,8 +124,8 @@ changeScore points GameState{score} = GameState{score = score + points}
 -- Function that decreases the amount of lives Pacman has in the GameState.
 -- Whenever he has no lives left the status of the game is changed to GameOver.
 decreaseLives :: GameState -> GameState
-decreaseLives GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives}} = 
-  GameState{pacman = Player{playerLives = playerLives - 1}}
+decreaseLives gstate@GameState{score = currentScore, status = gamestatus, pacman = Player{playerLives, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition}} = 
+  gstate{pacman = Player{playerLives = playerLives - 1, playerPosition, playerDirection, playerSpeed}, blinky = Ghost{ghostDirection, ghostPosition = (448,448)}}
 
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 

@@ -22,13 +22,13 @@ instance Num Point where
 data GameState = GameState { pacman :: Player, blinky :: Ghost, pinky :: Ghost, inky :: Ghost, clyde :: Ghost, maze :: Maze, score :: Int, status :: GameStatus}
   deriving (Show)
 
-data GameStatus = GameOn | GameLost | GameWon
+data GameStatus = GameOn | GameLost | GameWon | GamePaused
   deriving (Eq, Show)
 
-data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Speed, playerLives :: Int }
+data Player = Player { playerPosition :: Point, playerDirection :: Direction, playerStatus :: PlayerStatus, playerSpeed :: Float, playerLives :: Int }
   deriving (Show)
 
-data Ghost = Ghost { ghostPosition :: Point, ghostDirection :: Direction, ghostStatus :: GhostStatus, ghostSpeed :: Speed }
+data Ghost = Ghost { ghostPosition :: Point, ghostDirection :: Direction, ghostStatus :: GhostStatus, ghostSpeed :: Float }
   deriving (Show)
 
 data Speed = Stopped | Normal | Running | Crawling
@@ -58,7 +58,7 @@ data Direction = FaceUp | FaceDown | FaceLeft |FaceRight
 
 -- Constant that defines the initial state of the game.
 initialState :: GameState
-initialState = GameState (Player (80,944) FaceRight Neutral Normal 3) (Ghost (80,944) FaceUp Chase Normal) (Ghost (12,18) FaceUp Chase Normal) (Ghost (14,18) FaceUp Chase Normal) (Ghost (16,18) FaceUp Chase Normal) firstLevel 0 GameOn
+initialState = GameState (Player (48,944) FaceDown Neutral 3 3) (Ghost (176,944) FaceRight Chase 3) (Ghost (12,18) FaceUp Chase 3) (Ghost (14,18) FaceUp Chase 3) (Ghost (16,18) FaceUp Chase 3) firstLevel 0 GameOn
 
 {-
 // SOME INFO ABOUT MAZE/GRID/PACMAN-POSITION STRUCTURE
@@ -102,6 +102,14 @@ playerLocationInMaze (x,y) = getMazeCoordinates (getGridPosition (x,y))
 -- This function checks what the Mazefield over 16px is. This is useful, because pacman has a radius of 16px 
 fieldIn16 :: GameState -> MazeField
 fieldIn16 GameState{pacman = Player {playerPosition = (x,y), playerDirection = dir}}
+  | dir == FaceUp     = getMazeField (playerLocationInMaze(x,y+16)) firstLevel
+  | dir == FaceDown   = getMazeField (playerLocationInMaze(x,y-16)) firstLevel
+  | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
+  | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
+
+-- This function checks what the Mazefield over 16px is. This is useful, because pacman has a radius of 16px 
+fieldIn16Ghost :: GameState -> MazeField
+fieldIn16Ghost GameState{blinky = Ghost {ghostPosition = (x,y), ghostDirection = dir}}
   | dir == FaceUp     = getMazeField (playerLocationInMaze(x,y+16)) firstLevel
   | dir == FaceDown   = getMazeField (playerLocationInMaze(x,y-16)) firstLevel
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
@@ -180,6 +188,9 @@ hasFoodDot MazeField{content = x}
 -- This functions counts the number of FoodDots in the maze
 numberOfFoodDots :: Maze -> Int
 numberOfFoodDots maze = length $ filter hasFoodDot (concat maze)
+
+
+
 
 -- //BUILDING FIRST LEVEL MAZE//
 
