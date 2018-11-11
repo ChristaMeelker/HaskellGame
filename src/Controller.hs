@@ -25,7 +25,7 @@ step secs gstate@GameState {score = currentScore, pacman = Player {playerPositio
       | otherwise                                                     = makeStep gstate
 
 -- This functions handles the removal of FoodDots of the maze in the gamestate. It also updates the score.      
-eatFoodDotsGameState :: (Int,Int) -> GameState -> GameState
+eatFoodDotsGameState :: Point -> GameState -> GameState
 eatFoodDotsGameState (a,b) gstate@GameState{maze = oldMaze, score} = gstate{maze = newMaze, score = score + 10}
  where newMaze = eatFoodDot (a,b) oldMaze
     
@@ -80,6 +80,8 @@ changeGhostdirection gstate@GameState{blinky = Ghost{ghostDirection = dir, ghost
   | dir == FaceRight  = gstate{blinky = Ghost{ghostDirection = FaceDown, ghostPosition}}
   | dir == FaceDown   = gstate{blinky = Ghost{ghostDirection = FaceLeft, ghostPosition}}
   | dir == FaceLeft   = gstate{blinky = Ghost{ghostDirection = FaceUp, ghostPosition}}
+    where
+      --newDirection = determineDirection $ ghostPosition gstate
 
 -- This function changes the location and direction of pacman.
 movePacmanUp :: Float -> GameState -> GameState
@@ -164,13 +166,13 @@ toInt = round
 -- Right now if 2 tiles are the same distance from the target tile, the first tile
 -- of these 2 is chosen, but it should be different. If two tiles have the same distance 
 -- to the target tile the order should be up > left > down > right.
-determinePath :: Point -> GameState -> Direction
-determinePath targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = possibleDirections !! indexOfShortestDistance
+determineDirection :: Point -> GameState -> Direction
+determineDirection targetTile GameState{pacman = Player{playerPosition = (x,y), playerDirection = dir}} = possibleDirections !! indexOfShortestDistance
   where distances = map (calculateDistance targetTile) possiblePoints 
         shortestDistance = minimum distances
         indexOfShortestDistance = fromMaybe 0 (elemIndex shortestDistance distances)
-        possiblePoints = map trd3 (getSurroundingFields (toInt x, toInt y) dir)
-        possibleDirections = map snd3 (getSurroundingFields (toInt x, toInt y) dir)
+        possiblePoints = map trd3 (getSurroundingFields (playerLocationInMaze (x, y)) dir)
+        possibleDirections = map snd3 (getSurroundingFields (playerLocationInMaze (x, y)) dir)
 
 -- Function that calculates Blinky's target tile when he is in Chase mode using the GameState.
 -- Blinky's target tile is the same as Pacman's position. 

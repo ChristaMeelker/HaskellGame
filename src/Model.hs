@@ -88,15 +88,15 @@ The following functions convert grid(x,y) to maze(row,columns)
 -}
 
 -- Function that returns position of Pacman in the grid.
-getGridPosition :: Point -> (Int,Int)
-getGridPosition (x,y) = (floor (x/32),floor (y/32))
+getGridPosition :: Point -> Point
+getGridPosition (x,y) = toPoint(floor (x/32),floor (y/32))
 
 -- Function that returns column and row in maze based on position in the grid
-getMazeCoordinates :: (Int,Int) -> (Int,Int)
+getMazeCoordinates :: Point -> Point
 getMazeCoordinates (x,y) = (x, abs(y-30)) 
 
 -- This function combines the above two. To go straight from playerPosition (as in GameState) to Maze coordinates.
-playerLocationInMaze :: Point -> (Int,Int)
+playerLocationInMaze :: Point -> Point
 playerLocationInMaze (x,y) = getMazeCoordinates (getGridPosition (x,y))
 
 -- This function checks what the Mazefield over 16px is. This is useful, because pacman has a radius of 16px 
@@ -115,10 +115,10 @@ fieldIn16Ghost GameState{blinky = Ghost {ghostPosition = (x,y), ghostDirection =
   | dir == FaceLeft   = getMazeField (playerLocationInMaze(x-16,y)) firstLevel
   | dir == FaceRight  = getMazeField (playerLocationInMaze(x+16,y)) firstLevel
 
-eatFoodDot :: (Int,Int) -> Maze -> Maze
+eatFoodDot :: Point -> Maze -> Maze
 eatFoodDot (x,y) level = chunksOf 28 newMaze
   where concattedLevel = concat level
-        newMaze = (element (y*28+x) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
+        newMaze = (element (round(y*28+x)) .~ MazeField{field = Straightaway, content = Empty}) concattedLevel
 
 {-
 // DEZE FUNCTIES WERKEN MAAR BLIJKEN NIET ZO USEFUL. (: MAYBE LATER WEL USEFUL //
@@ -137,8 +137,11 @@ nextMazeField gstate = getMazeField (nextGridPosition gstate) firstLevel
 -}
 
 --Function that returns a MazeField and its info from the maze when given a column and row
-getMazeField :: (Int,Int) -> Maze -> MazeField
-getMazeField (column,row) maze = (maze !! row) !! column
+getMazeField :: Point -> Maze -> MazeField
+getMazeField (column,row) maze = (maze !! rowInt) !! columnInt
+  where
+    rowInt = round row
+    columnInt = round column
 
 -- Function to filter out all Fields that don't have the Straightaway FieldType
 filterField :: [MazeField] -> [MazeField]
@@ -158,16 +161,16 @@ toPoint (x,y) = (fromIntegral x :: Float, fromIntegral y :: Float)
 
 -- Function that gathers all the surrounding MazeFields. To be used at an intersection.
 -- Always returns fields in the order left,front,right as seen from the direction of the Ghost.
-getSurroundingFields :: (Int,Int) -> Direction -> [(MazeField, Direction, Point)]
+getSurroundingFields :: Point -> Direction -> [(MazeField, Direction, Point)]
 getSurroundingFields (column, row) dir
   | dir == FaceUp = filter ((\getField -> field getField == Straightaway).fst3) upFields
   | dir == FaceDown = filter ((\getField -> field getField == Straightaway).fst3) downFields
   | dir == FaceLeft = filter ((\getField -> field getField == Straightaway).fst3) leftFields 
   | otherwise = filter ((\getField -> field getField == Straightaway).fst3) rightFields
-    where upFields = zip3 ([getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]) [FaceLeft, FaceUp, FaceRight] [toPoint(column - 1, row), toPoint(column, row - 1), toPoint(column + 1, row)]
-          downFields = zip3 ([getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel]) [FaceRight, FaceDown, FaceLeft] [toPoint(column + 1, row), toPoint(column, row + 1), toPoint(column - 1, row)]
-          leftFields = zip3 ([getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel]) [FaceDown, FaceLeft, FaceUp] [toPoint(column, row + 1), toPoint(column - 1, row), toPoint(column, row - 1)]
-          rightFields = zip3 ([getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]) [FaceUp, FaceRight, FaceDown] [toPoint(column, row - 1), toPoint(column + 1, row), toPoint(column, row + 1)]
+    where upFields = zip3 ([getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel]) [FaceLeft, FaceUp, FaceRight] [(column - 1, row), (column, row - 1), (column + 1, row)]
+          downFields = zip3 ([getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel]) [FaceRight, FaceDown, FaceLeft] [(column + 1, row), (column, row + 1), (column - 1, row)]
+          leftFields = zip3 ([getMazeField (column - 1, row) firstLevel] ++ [getMazeField (column - 2, row - 1) firstLevel] ++ [getMazeField (column - 1, row - 2) firstLevel]) [FaceDown, FaceLeft, FaceUp] [(column, row + 1), (column - 1, row), (column, row - 1)]
+          rightFields = zip3 ([getMazeField (column - 1, row - 2) firstLevel] ++ [getMazeField (column, row - 1) firstLevel] ++ [getMazeField (column - 1, row) firstLevel]) [FaceUp, FaceRight, FaceDown] [(column, row - 1), (column + 1, row), (column, row + 1)]
 
 -- Function to generate a random IO Int in a given range
 getRandomNumber :: Int -> Int -> IO Int
@@ -188,9 +191,10 @@ getRandomField (column, row) gstate = do number <- getRandomNumber 0 upperBound
 
 -- Ik heb geen idee hoe ik Random moet gebruiken voor wat ik wil, dus deze functie moeten we dan maar
 -- gebruiken om het pad van Ghosts te bepalen als ze in Scatter mode zitten
+{-
 getScatterField :: (Int,Int) -> Direction -> MazeField
 getScatterField (column, row) dir = getSurroundingFields (column,row) dir !! 1
-
+-}
 -- This function checks whether a MazeField contains a FoodDot
 hasFoodDot :: MazeField -> Bool
 hasFoodDot MazeField{content = x} 
